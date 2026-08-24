@@ -90,4 +90,39 @@ if (existsSync(staticRoot)) {
   }
 }
 
-console.log('Security structure checks passed. Live Supabase role scenarios remain manual integration tests.');
+assert(existsSync(join(root, 'supabase', 'verification', 'phase1_catalog_checks.sql')));
+const catalogueChecks = read('supabase/verification/phase1_catalog_checks.sql');
+assert.match(catalogueChecks, /p\.permissive = 'PERMISSIVE'/);
+assert.match(catalogueChecks, /p\.cmd = 'SELECT'/);
+assert.match(catalogueChecks, /p\.with_check is null/);
+assert.match(catalogueChecks, /has_column_privilege/);
+assert.match(catalogueChecks, /index_relation\.relkind = 'i'/);
+assert.match(catalogueChecks, /case when actual = expected then 'PASS' else 'FAIL' end/);
+
+assert(existsSync(join(root, 'src', 'app', 'api', 'admin', 'acceptance-target', 'route.ts')));
+const targetAttestation = read('src/app/api/admin/acceptance-target/route.ts');
+assert.match(targetAttestation, /PHASE1_ACCEPTANCE_TOKEN/);
+assert.match(targetAttestation, /PHASE1_APP_URL/);
+assert.match(targetAttestation, /createHmac/);
+assert.match(targetAttestation, /nonce/);
+assert.match(targetAttestation, /targetFingerprint/);
+
+const liveAcceptance = read('scripts/phase1-live-acceptance.mjs');
+assert.match(liveAcceptance, /I_CONFIRM_THIS_PROJECT_IS_DISPOSABLE/);
+assert.match(liveAcceptance, /PHASE1_DISPOSABLE_PROJECT_REF/);
+assert.match(liveAcceptance, /PHASE1_ACCEPTANCE_TOKEN/);
+assert.match(liveAcceptance, /SUPABASE_SERVICE_ROLE_KEY/);
+assert.match(liveAcceptance, /Legacy SUPABASE_SERVICE_KEY is forbidden/);
+assert.match(liveAcceptance, /Application target attestation failed before mutation/);
+assert.match(liveAcceptance, /timingSafeEqual/);
+assert.doesNotMatch(liveAcceptance, /authorization:\s*`Bearer \$\{acceptanceToken\}`/);
+assert.match(liveAcceptance, /The pre-logout session cookie remained usable/);
+assert.match(liveAcceptance, /Cleanup did not delete the/);
+for (const table of [
+  'customers', 'payments', 'bookings', 'audit_logs',
+  'slot_holds', 'inventory_holds', 'vrm_cache',
+]) {
+  assert.match(liveAcceptance, new RegExp(`privateRows\\.${table}`));
+}
+
+console.log('Security structure checks passed. Live Supabase role scenarios remain gated integration tests.');

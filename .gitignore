@@ -13,3 +13,11 @@ coverage
 .DS_Store
 next-env.d.ts
 .wrangler
+
+# Local Graphify indexes and extraction caches. Curated query memory may remain tracked.
+graphify-out/cache/
+graphify-out/reflections/
+graphify-out/graph.json
+graphify-out/manifest.json
+graphify-out/.graphify_*
+graphify-out/.vocab.txt
