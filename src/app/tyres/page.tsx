@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { localStore } from '@/lib/mockData';
+import { isMockDataEnabled } from '@/lib/mock-mode';
 import { formatPrice, formatTyreSize } from '@/lib/utils';
 import MStripe from '@/components/ui/MStripe';
 import { ShieldCheck, Zap, Fuel, Volume2 } from 'lucide-react';
@@ -22,33 +22,14 @@ export default async function TyresPage({ searchParams }: Props) {
   const filterSeason = sp.season;
 
   let tyres: Tyre[] = [];
+  const mockMode = isMockDataEnabled();
 
-  if (width && profile && rim) {
-    if (isSupabaseConfigured()) {
-      try {
-        const { data } = await supabase
-          .from('tyre_inventory')
-          .select('*')
-          .eq('width', width)
-          .eq('profile', profile)
-          .eq('rim', rim)
-          .eq('active', true)
-          .gt('stock', 0)
-          .order('sell_price', { ascending: true })
-          .returns<Tyre[]>();
-        if (data && data.length > 0) {
-          tyres = data;
-        }
-      } catch {
-        // fallback
-      }
-    }
-    if (tyres.length === 0) {
+  if (mockMode) {
+    if (width && profile && rim) {
       tyres = localStore.getTyres(width, profile, rim);
+    } else {
+      tyres = localStore.getAllTyres().filter((t) => t.active && t.stock > 0);
     }
-  } else {
-    // If no size filter, show all popular in-stock tyres
-    tyres = localStore.getAllTyres().filter((t) => t.active && t.stock > 0);
   }
 
   // Apply tier / season filters if selected
@@ -72,7 +53,7 @@ export default async function TyresPage({ searchParams }: Props) {
       <MStripe className="mb-6" />
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
-          <p className="label mb-2">Tyre Catalogue & Stock</p>
+          <p className="label mb-2">Tyre options</p>
           <h1 className="display-1">
             {width && profile && rim ? (
               <>
@@ -80,14 +61,16 @@ export default async function TyresPage({ searchParams }: Props) {
               </>
             ) : (
               <>
-                ALL SIZES <span className="text-brand">IN STOCK</span>
+                BROWSE BY <span className="text-brand">TYRE SIZE</span>
               </>
             )}
           </h1>
           <p className="text-ink-2 mt-2">
             {tyres.length === 0
               ? 'No tyres matching your current filter.'
-              : `${tyres.length} ${tyres.length === 1 ? 'tyre option' : 'tyre options'} ready for mobile fitting. Prices include valve, balance, fitting and eco-disposal.`}
+              : mockMode
+                ? `${tyres.length} sample ${tyres.length === 1 ? 'option' : 'options'} in this local preview.`
+                : `${tyres.length} ${tyres.length === 1 ? 'option' : 'options'} matching this tyre size.`}
           </p>
         </div>
 
@@ -171,7 +154,9 @@ export default async function TyresPage({ searchParams }: Props) {
         <div className="card max-w-lg mx-auto text-center py-12">
           <h2 className="text-xl font-bold mb-3">No tyres found</h2>
           <p className="text-sm text-ink-2 mb-6">
-            We don&apos;t have stock matching that exact combination right now, but we can order it from our warehouse for next-day fitting.
+            {mockMode
+              ? 'No demo stock matches that exact combination.'
+              : "We couldn't load this right now. Please try again later."}
           </p>
           <div className="flex justify-center gap-3">
             <Link href="/tyres" className="btn btn-secondary">Clear filters</Link>
@@ -199,15 +184,15 @@ export default async function TyresPage({ searchParams }: Props) {
                 <div className="grid grid-cols-3 gap-2 bg-surface-3/60 p-2.5 rounded border border-border/50 mb-4 text-xs">
                   <div className="flex items-center gap-1.5 text-ink-2">
                     <Fuel size={14} className="text-brand shrink-0" />
-                    <span>Eco: <strong className="text-ink-1">{t.fuel_economy ?? 'B'}</strong></span>
+                    <span>Eco: <strong className="text-ink-1">{t.fuel_economy ?? '—'}</strong></span>
                   </div>
                   <div className="flex items-center gap-1.5 text-ink-2">
                     <Zap size={14} className="text-brand shrink-0" />
-                    <span>Grip: <strong className="text-ink-1">{t.wet_grip ?? 'A'}</strong></span>
+                    <span>Grip: <strong className="text-ink-1">{t.wet_grip ?? '—'}</strong></span>
                   </div>
                   <div className="flex items-center gap-1.5 text-ink-2">
                     <Volume2 size={14} className="text-brand shrink-0" />
-                    <span>Noise: <strong className="text-ink-1">{t.noise_db ?? 71}dB</strong></span>
+                    <span>Noise: <strong className="text-ink-1">{t.noise_db ? `${t.noise_db}dB` : '—'}</strong></span>
                   </div>
                 </div>
 
@@ -227,11 +212,11 @@ export default async function TyresPage({ searchParams }: Props) {
                   </div>
                   <div className="text-xs text-ok font-semibold flex items-center gap-1">
                     <span className="h-1.5 w-1.5 rounded-full bg-ok animate-pulse" />
-                    {t.stock} in stock
+                    {mockMode ? 'Preview stock' : `${t.stock} available`}
                   </div>
                 </div>
                 <p className="text-[11px] text-ink-3 mb-4">
-                  Includes mobile fitting, new valve, electronic wheel balancing &amp; casing disposal.
+                  Review the selected tyre, quantity and appointment details before continuing.
                 </p>
                 <Link
                   href={`/booking?tyre=${t.id}&qty=2&${qs.toString()}`}
@@ -245,27 +230,27 @@ export default async function TyresPage({ searchParams }: Props) {
         </div>
       )}
 
-      {/* Trust guarantees bar */}
+      {/* Selection guidance */}
       <div className="mt-16 card grid md:grid-cols-3 gap-6 bg-surface-2/80 border-border">
         <div className="flex items-start gap-3">
           <ShieldCheck size={22} className="text-brand shrink-0 mt-0.5" />
           <div>
-            <h4 className="text-sm font-bold">100% Fitment Guarantee</h4>
-            <p className="text-xs text-ink-2 mt-1">Our technician checks your vehicle torque specs and pressure sensors on arrival.</p>
+            <h4 className="text-sm font-bold">Confirm the fitment</h4>
+            <p className="text-xs text-ink-2 mt-1">Compare the selected size with the numbers printed on the physical tyre sidewall.</p>
           </div>
         </div>
         <div className="flex items-start gap-3">
           <Zap size={22} className="text-brand shrink-0 mt-0.5" />
           <div>
-            <h4 className="text-sm font-bold">No Hidden Callout Fees</h4>
-            <p className="text-xs text-ink-2 mt-1">Zero call-out fees across core London zones. What you see is what you pay.</p>
+            <h4 className="text-sm font-bold">Review the complete price</h4>
+            <p className="text-xs text-ink-2 mt-1">Any applicable fitting-location charge must be shown before a real payment step.</p>
           </div>
         </div>
         <div className="flex items-start gap-3">
           <Fuel size={22} className="text-brand shrink-0 mt-0.5" />
           <div>
-            <h4 className="text-sm font-bold">Professional Mobile Workshop</h4>
-            <p className="text-xs text-ink-2 mt-1">High-spec balance machines and pneumatic equipment built into every Mercedes Sprinter van.</p>
+            <h4 className="text-sm font-bold">Keep the vehicle details</h4>
+            <p className="text-xs text-ink-2 mt-1">The tyre size, registration and postcode remain attached to the booking journey.</p>
           </div>
         </div>
       </div>

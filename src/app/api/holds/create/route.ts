@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceClient, isSupabaseConfigured } from '@/lib/supabase';
 import { createHoldSchema } from '@/lib/validation';
 import { localStore } from '@/lib/mockData';
+import { isMockDataEnabled } from '@/lib/mock-mode';
 
 export const runtime = 'nodejs';
 
@@ -13,6 +14,13 @@ export const runtime = 'nodejs';
  * the last slot in the same millisecond.
  */
 export async function POST(req: Request) {
+  if (!isMockDataEnabled()) {
+    return NextResponse.json(
+      { ok: false, error: 'not_implemented', message: 'Slot holds are reserved for Phase 3.' },
+      { status: 501 },
+    );
+  }
+
   let body: unknown;
   try {
     body = await req.json();

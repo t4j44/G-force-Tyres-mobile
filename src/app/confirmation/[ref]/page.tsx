@@ -6,6 +6,7 @@ import { localStore } from '@/lib/mockData';
 import { formatPrice, formatSlotTime, formatReg } from '@/lib/utils';
 import MStripe from '@/components/ui/MStripe';
 import type { BookingWithDetails } from '@/types';
+import { isMockDataEnabled } from '@/lib/mock-mode';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +35,7 @@ export default async function ConfirmationPage({
     }
   }
 
-  if (!booking) {
+  if (!booking && isMockDataEnabled()) {
     booking = localStore.getBookingByRef(ref) ?? null;
   }
 
@@ -157,7 +158,7 @@ export default async function ConfirmationPage({
         </div>
         <p>1. A confirmation receipt and calendar invite have been sent to <strong>{b.customer?.email ?? 'your email'}</strong>.</p>
         <p>2. Our technician will review your vehicle fitment specs and load your tyres into our mobile workshop van.</p>
-        <p>3. On fitting day, our driver will call ahead 30 minutes before arrival at your chosen location.</p>
+        <p>3. Use the verified contact route shown with the booking if an appointment update is needed.</p>
       </div>
     </div>
   );

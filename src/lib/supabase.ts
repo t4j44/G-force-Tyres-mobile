@@ -1,24 +1,23 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import 'server-only';
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { getSupabasePublicEnv, hasSupabasePublicEnv } from '@/lib/env';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export function isSupabaseConfigured(): boolean {
-  return (
-    !!url &&
-    !!anonKey &&
-    !url.includes('placeholder.supabase.co') &&
-    url.startsWith('https://')
-  );
+  return hasSupabasePublicEnv();
 }
 
 /**
  * Browser client. RLS applies.
  * Can only read the public catalogue: tyres, slots, zones, settings.
  */
-export const supabase: SupabaseClient = createClient(url, anonKey, {
-  auth: { persistSession: true, autoRefreshToken: true },
-});
+export function createPublicClient(): SupabaseClient {
+  const env = getSupabasePublicEnv();
+  return createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
 
 /**
  * Server-only client. BYPASSES RLS — full database access.
@@ -27,8 +26,5 @@ export const supabase: SupabaseClient = createClient(url, anonKey, {
  * Only use inside `src/app/api/**` route handlers or server components.
  */
 export function createServiceClient(): SupabaseClient {
-  const serviceKey = process.env.SUPABASE_SERVICE_KEY || anonKey;
-  return createClient(url, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  return createAdminClient();
 }

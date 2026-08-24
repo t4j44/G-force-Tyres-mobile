@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ShieldCheck, ArrowLeft, Clock, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, FileCheck2, Info } from 'lucide-react';
 import MStripe from '@/components/ui/MStripe';
 
 export default function CancellationPage() {
@@ -8,52 +8,42 @@ export default function CancellationPage() {
       <MStripe className="mb-6" />
 
       <div className="mb-8">
-        <p className="label mb-2 text-brand">Fair Customer Policy</p>
-        <h1 className="display-1">CANCELLATION &amp; REFUND POLICY</h1>
-        <p className="text-xs text-ink-3">Transparent, fair, zero-fuss cancellations</p>
+        <p className="label mb-2 text-brand">Customer information</p>
+        <h1 className="display-1">CANCELLATIONS &amp; REFUNDS</h1>
+        <p className="text-sm text-ink-3">The final commercial policy is awaiting owner and legal approval.</p>
       </div>
 
       <div className="card space-y-6 text-sm text-ink-2 leading-relaxed">
-        {/* Highlight Banner */}
-        <div className="p-4 bg-ok/10 border border-ok/30 rounded flex items-start gap-3 text-ink-1">
-          <CheckCircle2 size={20} className="text-ok shrink-0 mt-0.5" />
+        <div className="p-4 bg-brand/10 border border-brand/30 rounded flex items-start gap-3 text-ink-1">
+          <Info size={20} className="text-brand shrink-0 mt-0.5" />
           <div>
-            <strong className="block text-ok font-bold mb-1">100% Full Refund up to 48 Hours Before Fitting</strong>
+            <strong className="block text-brand font-bold mb-1">No real payment is collected by the current preview</strong>
             <span>
-              If your plans change or you no longer require a tyre fitting, you can cancel or reschedule anytime up to 48 hours before your slot for an instant, full refund of your £50 deposit.
+              Deposit amounts, cancellation windows, fees and refund timing must not be assumed from development data.
             </span>
           </div>
         </div>
 
         <section className="space-y-2">
-          <h2 className="text-base font-bold text-ink-1 uppercase tracking-wider">1. Cancellation Timelines</h2>
-          <div className="grid sm:grid-cols-2 gap-3 pt-2">
-            <div className="p-3 bg-surface-3 rounded border border-line">
-              <div className="text-xs uppercase font-bold text-ok flex items-center gap-1.5 mb-1">
-                <Clock size={14} /> More than 48h before slot
-              </div>
-              <p className="text-xs text-ink-2">100% deposit refunded immediately to original payment card.</p>
-            </div>
-            <div className="p-3 bg-surface-3 rounded border border-line">
-              <div className="text-xs uppercase font-bold text-warning flex items-center gap-1.5 mb-1">
-                <Clock size={14} /> Less than 48h before slot
-              </div>
-              <p className="text-xs text-ink-2">Deposit may be held towards warehouse stocking and van dispatch scheduling.</p>
-            </div>
-          </div>
+          <h2 className="text-base font-bold text-ink-1 uppercase tracking-wider">What the final policy must state</h2>
+          <ul className="grid gap-3 pt-2 sm:grid-cols-2">
+            {[
+              'The exact cancellation and rescheduling windows',
+              'Any charge retained after a stated deadline',
+              'How an approved refund is requested and processed',
+              'The payment provider’s expected refund timing',
+            ].map((item) => (
+              <li key={item} className="flex gap-2 p-3 bg-surface-3 rounded border border-line text-xs">
+                <FileCheck2 size={15} className="mt-0.5 shrink-0 text-brand" /> {item}
+              </li>
+            ))}
+          </ul>
         </section>
 
         <section className="space-y-2 border-t border-line pt-4">
-          <h2 className="text-base font-bold text-ink-1 uppercase tracking-wider">2. Rescheduling</h2>
+          <h2 className="text-base font-bold text-ink-1 uppercase tracking-wider">Before production launch</h2>
           <p>
-            Rescheduling your appointment to another date or 2-hour window is completely free of charge when requested before our van is dispatched.
-          </p>
-        </section>
-
-        <section className="space-y-2 border-t border-line pt-4">
-          <h2 className="text-base font-bold text-ink-1 uppercase tracking-wider">3. How to Cancel or Reschedule</h2>
-          <p>
-            Simply open your booking management link (available on your confirmation page or in your email) or contact our operations team at <strong>020 7946 0991</strong>.
+            This page must be replaced with approved wording and a verified contact route. The booking-management flow must also be tested against real payment and refund behavior.
           </p>
         </section>
 

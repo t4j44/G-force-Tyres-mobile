@@ -5,6 +5,7 @@ import { checkCoverage } from '@/lib/postcodes';
 import { verifyTurnstile } from '@/lib/turnstile';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 import { vrmLookupSchema } from '@/lib/validation';
+import { isMockDataEnabled } from '@/lib/mock-mode';
 
 export const runtime = 'nodejs';
 
@@ -23,6 +24,13 @@ export const runtime = 'nodejs';
  * to manual tyre size entry, which is equally valid.
  */
 export async function POST(req: Request) {
+  if (!isMockDataEnabled()) {
+    return NextResponse.json(
+      { ok: false, error: 'not_implemented', message: 'Vehicle search is reserved for Phase 2.' },
+      { status: 501 },
+    );
+  }
+
   const ip = getClientIp(req);
 
   let body: unknown;
@@ -103,7 +111,9 @@ export async function POST(req: Request) {
   });
 }
 
-async function captureInterest(email: string, postcode: string, source: string): Promise<void> {
+async function captureInterest(email: string | undefined, postcode: string, source: string): Promise<void> {
+  if (!email) return;
+
   try {
     const db = createServiceClient();
     await db.from('interest_registrations').insert({

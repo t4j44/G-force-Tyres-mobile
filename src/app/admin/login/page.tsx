@@ -2,20 +2,43 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Lock, ArrowRight, ShieldCheck, Wrench, AlertCircle } from 'lucide-react';
+import { ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
 import MStripe from '@/components/ui/MStripe';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('admin@gforcetyres.co.uk');
-  const [password, setPassword] = useState('••••••••••••');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleLogin(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    // For demo & local dev, authenticate directly
-    router.push('/admin/bookings');
+    if (isSubmitting) return;
+
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+        setError(payload?.message ?? 'Unable to sign in with those credentials.');
+        return;
+      }
+
+      router.replace('/admin');
+      router.refresh();
+    } catch {
+      setError('Sign in is temporarily unavailable. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -60,20 +83,16 @@ export default function AdminLoginPage() {
             </div>
           )}
 
-          <button type="submit" className="btn btn-primary w-full mt-4">
-            Enter Dispatch Console <ArrowRight size={16} />
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            aria-busy={isSubmitting}
+            className="btn btn-primary w-full mt-4 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+            {isSubmitting ? 'Signing in…' : 'Enter Dispatch Console'}
           </button>
         </form>
-
-        <div className="pt-4 border-t border-line text-center">
-          <button
-            type="button"
-            onClick={() => router.push('/admin/bookings')}
-            className="text-xs text-brand hover:underline"
-          >
-            ⚡ 1-Click Demo Login (Instant Access)
-          </button>
-        </div>
       </div>
     </div>
   );

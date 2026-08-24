@@ -19,6 +19,7 @@ import { localStore, MOCK_FITTERS } from '@/lib/mockData';
 import { formatPrice, formatSlotTime, formatReg } from '@/lib/utils';
 import MStripe from '@/components/ui/MStripe';
 import type { BookingWithDetails, BookingStatus } from '@/types';
+import { isMockDataEnabled } from '@/lib/mock-mode';
 
 const STATUS_STEPS: Array<{ key: BookingStatus; label: string; description: string }> = [
   { key: 'confirmed',        label: 'Deposit Confirmed', description: 'Your slot and tyres are locked in.' },
@@ -35,16 +36,17 @@ export default function ManageBookingPage({
 }) {
   const unwrappedParams = use(params);
   const token = unwrappedParams.token;
+  const mockMode = isMockDataEnabled();
 
   const [booking, setBooking] = useState<BookingWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const b = localStore.getBookingByToken(token) ?? null;
+    const b = mockMode ? localStore.getBookingByToken(token) ?? null : null;
     setBooking(b);
     setLoading(false);
-  }, [token]);
+  }, [mockMode, token]);
 
   if (loading) {
     return (
@@ -244,16 +246,16 @@ export default function ManageBookingPage({
             </h3>
 
             <p className="text-xs text-ink-2">
-              You can reschedule your slot, update your fitting instructions, or cancel free of charge up to 48 hours before your slot.
+              This local preview demonstrates booking-management states only. Production rescheduling, cancellation and refund rules are not active yet.
             </p>
 
             <div className="space-y-2.5">
               <button
                 type="button"
                 className="btn btn-secondary w-full btn-sm text-xs font-semibold"
-                onClick={() => setActionMessage('To reschedule, please choose a new slot or contact dispatch directly at 020 7946 0991 (Ref: ' + b.booking_ref + ').')}
+                onClick={() => setActionMessage('Rescheduling is a preview-only action. No live appointment has been changed (Ref: ' + b.booking_ref + ').')}
               >
-                Reschedule Date / Slot
+                Preview Reschedule Request
               </button>
 
               <button
@@ -262,10 +264,10 @@ export default function ManageBookingPage({
                 onClick={() => {
                   localStore.updateBookingStatus(b.id, 'cancelled');
                   setBooking({ ...b, status: 'cancelled' });
-                  setActionMessage('Booking cancelled. Under our 48-hour policy, your £50 deposit has been refunded automatically.');
+                  setActionMessage('Local preview state updated to cancelled. No real payment or refund occurred.');
                 }}
               >
-                Request Cancellation &amp; Full Refund
+                Preview Cancellation State
               </button>
             </div>
           </div>

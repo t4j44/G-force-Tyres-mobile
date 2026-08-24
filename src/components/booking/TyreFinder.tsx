@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Loader2, Check, AlertCircle, Car, MapPin } from 'lucide-react';
 import { formatReg } from '@/lib/utils';
+import { isMockDataEnabled } from '@/lib/mock-mode';
 import type { VRMResult, ServiceZone } from '@/types';
 
 type Stage = 'postcode' | 'vehicle' | 'result' | 'manual';
@@ -14,6 +15,7 @@ const RIMS     = [14, 15, 16, 17, 18, 19, 20, 21, 22];
 
 export default function TyreFinder() {
   const router = useRouter();
+  const mockMode = isMockDataEnabled();
 
   const [stage, setStage] = useState<Stage>('postcode');
   const [busy, setBusy] = useState(false);
@@ -65,11 +67,12 @@ export default function TyreFinder() {
       const res = await fetch('/api/vrm/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ registration: reg, postcode, email: 'customer@gforce.co.uk' }),
+        body: JSON.stringify({ registration: reg, postcode }),
       });
       const json = await res.json();
 
       if (!json.ok) {
+        setError(json.message || 'We could not match that registration. Enter the tyre size instead.');
         setStage('manual');
         return;
       }
@@ -78,6 +81,7 @@ export default function TyreFinder() {
       setZone(json.data.zone ?? zone);
       setStage('result');
     } catch {
+      setError('Vehicle lookup is unavailable. Enter the tyre size from the sidewall instead.');
       setStage('manual');
     } finally {
       setBusy(false);
@@ -100,58 +104,78 @@ export default function TyreFinder() {
   const spec = vehicle ? (axle === 'rear' && vehicle.rear ? vehicle.rear : vehicle.front) : null;
 
   return (
-    <div className="w-full max-w-[520px]">
+    <div className="w-full max-w-[640px]" aria-live="polite">
       {/* ── STEP 1: POSTCODE ── */}
       {stage === 'postcode' && (
-        <form onSubmit={checkPostcode} className="space-y-4 card border-border-brand/30 shadow-2xl">
-          <div>
-            <label htmlFor="pc" className="label mb-2 block flex items-center gap-1.5">
-              <MapPin size={14} className="text-brand" /> 1. Enter Your Fitting Postcode
-            </label>
-            <p className="text-xs text-ink-3 mb-3">
-              We check our active London mobile workshop zones before proceeding.
-            </p>
+        <form onSubmit={checkPostcode} className="finder-panel">
+          <div className="finder-panel-head">
+            <div>
+              <div className="flex items-center gap-2 text-sm font-bold text-ink-1">
+                <MapPin size={16} className="text-brand" /> Start your tyre search
+              </div>
+              <p className="mt-1 text-xs text-ink-3">
+                Check the fitting area, then search by registration or tyre size.
+              </p>
+            </div>
+            <span className="finder-step-pill">Step 1 of 3</span>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <input
-              id="pc"
-              className="input flex-1 uppercase text-base"
-              placeholder="e.g. E14 8PX"
-              value={postcode}
-              onChange={(e) => setPostcode(e.target.value)}
-              autoComplete="postal-code"
-              required
-              aria-invalid={!!error}
-            />
-            <button type="submit" className="btn btn-primary" disabled={busy || postcode.trim().length < 3}>
-              {busy ? <Loader2 size={18} className="animate-spin" /> : <>Check Postcode <ArrowRight size={16} /></>}
-            </button>
-          </div>
+          <div className="finder-panel-body">
+            <label htmlFor="pc" className="sr-only">Fitting postcode</label>
+            <div className="finder-input-row">
+              <input
+                id="pc"
+                className="input uppercase text-base"
+                placeholder="Fitting postcode"
+                value={postcode}
+                onChange={(e) => setPostcode(e.target.value)}
+                autoComplete="postal-code"
+                inputMode="text"
+                required
+                aria-invalid={!!error}
+              />
+              <button type="submit" className="btn btn-primary" disabled={busy || postcode.trim().length < 3}>
+                {busy ? <Loader2 size={18} className="animate-spin" /> : <>Check area <ArrowRight size={15} /></>}
+              </button>
+            </div>
 
-          {error && <ErrorMessage msg={error} />}
+            {error && <div className="mt-3"><ErrorMessage msg={error} /></div>}
+
+            <div className="finder-alt-row">
+              <span>Already know the sidewall size?</span>
+              <button type="button" onClick={() => { setError(null); setStage('manual'); }} className="finder-alt-button">
+                Enter it manually →
+              </button>
+            </div>
+
+            {mockMode && (
+              <p className="mt-3 border-t border-line pt-3 text-[11px] text-ink-3">
+                Local preview: try <strong className="text-ink-2">E14 8PX</strong>, then <strong className="text-ink-2">AB21 ABC</strong>.
+              </p>
+            )}
+          </div>
         </form>
       )}
 
       {/* ── STEP 2: REGISTRATION ── */}
       {stage === 'vehicle' && (
-        <form onSubmit={lookupVehicle} className="space-y-4 card border-border-brand/30 shadow-2xl animate-in fade-in">
+        <form onSubmit={lookupVehicle} className="space-y-4 finder-panel p-5 animate-in fade-in">
           {zone && (
             <div className="p-3 bg-ok/10 border border-ok/30 rounded flex items-start gap-2 text-xs text-ink-1">
               <Check size={16} className="text-ok shrink-0 mt-0.5" />
               <div>
-                <strong className="text-ok block font-bold">{zone.zone_name} Covered</strong>
-                <span>{zone.callout_charge > 0 ? `£${(zone.callout_charge / 100).toFixed(2)} callout charge applies.` : 'Free mobile callout to this location.'}</span>
+                <strong className="text-ok block font-bold">Postcode accepted</strong>
+                <span>Continue with the vehicle registration, or switch to manual size entry.</span>
               </div>
             </div>
           )}
 
           <div>
             <label htmlFor="reg" className="label mb-2 block flex items-center gap-1.5">
-              <Car size={14} className="text-brand" /> 2. Enter Vehicle Registration
+              <Car size={14} className="text-brand" /> Enter the vehicle registration
             </label>
             <p className="text-xs text-ink-3 mb-3">
-              We look up the exact factory tyre dimensions fitted to your vehicle.
+              We will return a fitment for you to check against the tyre sidewall.
             </p>
             <input
               id="reg"
@@ -165,7 +189,7 @@ export default function TyreFinder() {
           </div>
 
           <button type="submit" className="btn btn-primary w-full" disabled={busy || reg.trim().length < 2}>
-            {busy ? <><Loader2 size={18} className="animate-spin" /> Identifying vehicle specs...</> : <>Find My Fitted Tyres <ArrowRight size={16} /></>}
+              {busy ? <><Loader2 size={18} className="animate-spin" /> Checking fitment...</> : <>Find matching size <ArrowRight size={16} /></>}
           </button>
 
           {error && <ErrorMessage msg={error} />}
@@ -193,7 +217,9 @@ export default function TyreFinder() {
       {stage === 'result' && vehicle && spec && (
         <div className="card space-y-5 border-border-brand/40 shadow-2xl animate-in fade-in">
           <div>
-            <div className="label mb-1 text-brand">3. Vehicle &amp; Tyre Fitment Found</div>
+            <div className="label mb-1 text-brand">
+              {mockMode ? 'Local fitment preview' : 'Vehicle fitment found'}
+            </div>
             <div className="text-xl font-bold text-ink-1">
               {vehicle.make} {vehicle.model}
             </div>
@@ -283,6 +309,8 @@ export default function TyreFinder() {
               Select the 3 numbers stamped on your tyre sidewall, e.g. <span className="mono text-ink-1 font-bold">225/45 R18</span>.
             </p>
           </div>
+
+          {error && <ErrorMessage msg={error} />}
 
           <div className="grid grid-cols-3 gap-3">
             {([

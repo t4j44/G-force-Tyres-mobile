@@ -1,16 +1,15 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import SmoothScroll from '@/components/animations/SmoothScroll';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
 export const metadata: Metadata = {
-  title: 'G Force Tyres — Mobile Tyre Fitting in London',
+  title: 'G Force Tyres — Mobile Tyre Fitting',
   description:
-    'We fit your tyres wherever you are. Enter your reg, pick your tyres, choose a slot. Same-day fitting across London.',
+    'Check your fitting postcode, identify the right tyre size and continue into one focused booking journey.',
   openGraph: {
     title: 'G Force Tyres — Mobile Tyre Fitting',
-    description: 'Tyres fitted at your home, office or roadside. Book in under two minutes.',
+    description: 'A location-first way to identify your tyre size and continue to booking.',
     type: 'website',
     locale: 'en_GB',
   },
@@ -26,14 +25,6 @@ export const viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-GB">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-        />
-      </head>
       <body>
         <a
           href="#main"
@@ -41,7 +32,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Skip to content
         </a>
-        <SmoothScroll />
         <Header />
         <main id="main">{children}</main>
         <Footer />

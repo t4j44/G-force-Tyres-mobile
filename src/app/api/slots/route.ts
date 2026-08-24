@@ -1,12 +1,20 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient, isSupabaseConfigured } from '@/lib/supabase';
 import { localStore } from '@/lib/mockData';
+import { isMockDataEnabled } from '@/lib/mock-mode';
 import type { BookingSlot, SlotWithAvailability } from '@/types';
 
 export const runtime = 'nodejs';
 
 /** GET /api/slots?date=YYYY-MM-DD */
 export async function GET(req: Request) {
+  if (!isMockDataEnabled()) {
+    return NextResponse.json(
+      { ok: false, error: 'not_implemented', message: "We couldn't load this right now." },
+      { status: 503 },
+    );
+  }
+
   const { searchParams } = new URL(req.url);
   const date = searchParams.get('date') ?? undefined;
 

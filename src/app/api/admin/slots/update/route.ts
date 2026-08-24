@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { localStore } from '@/lib/mockData';
-import { isSupabaseConfigured, createServiceClient } from '@/lib/supabase';
 import { z } from 'zod';
+import { adminErrorResponse, requireAdmin } from '@/lib/auth/admin';
+import { isMockDataEnabled } from '@/lib/mock-mode';
+import { writeAuditLog } from '@/lib/audit';
 
 export const runtime = 'nodejs';
 
@@ -14,6 +16,13 @@ const updateSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  let admin;
+  try {
+    admin = await requireAdmin();
+  } catch (error) {
+    return adminErrorResponse(error);
+  }
+
   try {
     const body = await req.json();
     const parsed = updateSchema.safeParse(body);
@@ -24,43 +33,56 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!isMockDataEnabled()) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'not_implemented',
+          message: 'Persistent slot mutations are reserved for Phase 3.',
+        },
+        { status: 501 },
+      );
+    }
+
     const { action, slotId, date, capacity } = parsed.data;
 
     if (action === 'set_capacity' && slotId && capacity) {
       localStore.setSlotCapacity(slotId, capacity);
-      if (isSupabaseConfigured()) {
-        try {
-          const db = createServiceClient();
-          await db.from('booking_slots').update({ max_bookings: capacity }).eq('id', slotId);
-        } catch {}
-      }
+      await writeAuditLog(admin.profile, {
+        action: 'DEMO_SLOT_CAPACITY_CHANGED',
+        resourceType: 'booking_slots',
+        metadata: { slotId, capacity },
+      }).catch(() => undefined);
       return NextResponse.json({ ok: true, message: `Capacity updated to ${capacity}.` });
     }
 
     if (action === 'toggle_active' && slotId) {
       localStore.toggleSlotActive(slotId);
+      await writeAuditLog(admin.profile, {
+        action: 'DEMO_SLOT_TOGGLED',
+        resourceType: 'booking_slots',
+        metadata: { slotId },
+      }).catch(() => undefined);
       return NextResponse.json({ ok: true, message: 'Slot status updated.' });
     }
 
     if (action === 'block_date' && date) {
       localStore.blockDate(date);
-      if (isSupabaseConfigured()) {
-        try {
-          const db = createServiceClient();
-          await db.from('booking_slots').update({ active: false }).eq('slot_date', date);
-        } catch {}
-      }
+      await writeAuditLog(admin.profile, {
+        action: 'DEMO_DATE_BLOCKED',
+        resourceType: 'blocked_dates',
+        metadata: { date },
+      }).catch(() => undefined);
       return NextResponse.json({ ok: true, message: `Blocked all slots for ${date}.` });
     }
 
     if (action === 'unblock_date' && date) {
       localStore.unblockDate(date);
-      if (isSupabaseConfigured()) {
-        try {
-          const db = createServiceClient();
-          await db.from('booking_slots').update({ active: true }).eq('slot_date', date);
-        } catch {}
-      }
+      await writeAuditLog(admin.profile, {
+        action: 'DEMO_DATE_UNBLOCKED',
+        resourceType: 'blocked_dates',
+        metadata: { date },
+      }).catch(() => undefined);
       return NextResponse.json({ ok: true, message: `Re-opened slots for ${date}.` });
     }
 

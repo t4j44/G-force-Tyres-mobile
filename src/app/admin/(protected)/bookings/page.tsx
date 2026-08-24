@@ -23,22 +23,29 @@ import {
 import AdminNav from '@/components/admin/AdminNav';
 import MStripe from '@/components/ui/MStripe';
 import { localStore, MOCK_FITTERS } from '@/lib/mockData';
+import { isMockDataEnabled } from '@/lib/mock-mode';
+import AdminDataPending from '@/components/admin/AdminDataPending';
 import { formatPrice, formatSlotTime, formatReg } from '@/lib/utils';
 import type { BookingWithDetails, BookingStatus } from '@/types';
 
 export default function AdminBookingsPage() {
+  const mockMode = isMockDataEnabled();
   const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [feedback, setFeedback] = useState<string | null>(null);
 
   function reloadBookings() {
-    setBookings(localStore.getAllBookings());
+    setBookings(mockMode ? localStore.getAllBookings() : []);
   }
 
   useEffect(() => {
     reloadBookings();
-  }, []);
+  }, [mockMode]);
+
+  if (!mockMode) {
+    return <AdminDataPending title="BOOKINGS DATA PENDING" />;
+  }
 
   function handleUpdateStatus(id: string, newStatus: BookingStatus, fitterId?: string) {
     localStore.updateBookingStatus(id, newStatus, fitterId);
@@ -76,7 +83,7 @@ export default function AdminBookingsPage() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
         <div>
           <h1 className="display-2 leading-none">TODAY&apos;S DISPATCH QUEUE</h1>
-          <p className="text-xs text-ink-3 mt-1">Live mobile fitting workflow, technician dispatch &amp; status transitions</p>
+          <p className="text-xs text-ink-3 mt-1">Development workflow for technician dispatch and status transitions</p>
         </div>
 
         {/* Live Counters */}

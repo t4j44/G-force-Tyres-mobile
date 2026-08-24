@@ -21,9 +21,11 @@ import {
 import MStripe from '@/components/ui/MStripe';
 import { formatPrice, formatTyreSize, formatSlotTime, makeSessionToken } from '@/lib/utils';
 import { MOCK_TYRES, MOCK_SERVICE_ZONES } from '@/lib/mockData';
+import { isMockDataEnabled } from '@/lib/mock-mode';
 import type { Tyre, SlotWithAvailability, ServiceZone } from '@/types';
 
 function BookingWizard() {
+  const mockMode = isMockDataEnabled();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -41,7 +43,7 @@ function BookingWizard() {
   const [sessionToken] = useState(() => makeSessionToken());
 
   // Data state
-  const [allTyres, setAllTyres] = useState<Tyre[]>(MOCK_TYRES);
+  const [allTyres, setAllTyres] = useState<Tyre[]>(() => (mockMode ? MOCK_TYRES : []));
   const [selectedTyre, setSelectedTyre] = useState<Tyre | null>(null);
   const [quantity, setQuantity] = useState<number>(paramQty);
 
@@ -82,6 +84,7 @@ function BookingWizard() {
 
   // Load tyre on mount
   useEffect(() => {
+    if (!mockMode) return;
     let match = allTyres.find((t) => t.id === paramTyreId);
     if (!match) {
       match = allTyres.find((t) => t.width === paramWidth && t.profile === paramProfile && t.rim === paramRim) || allTyres[0];
@@ -92,10 +95,11 @@ function BookingWizard() {
     if (paramPostcode) {
       validateLocation(paramPostcode);
     }
-  }, [paramTyreId, paramWidth, paramProfile, paramRim, paramPostcode]);
+  }, [allTyres, mockMode, paramTyreId, paramWidth, paramProfile, paramRim, paramPostcode]);
 
   // Load available slots
   useEffect(() => {
+    if (!mockMode) return;
     setIsLoadingSlots(true);
     fetch('/api/slots')
       .then((r) => r.json())
@@ -111,7 +115,20 @@ function BookingWizard() {
         // Handled gracefully
       })
       .finally(() => setIsLoadingSlots(false));
-  }, []);
+  }, [mockMode]);
+
+  if (!mockMode) {
+    return (
+      <div className="container-g section max-w-2xl text-center">
+        <MStripe className="mb-6 mx-auto" />
+        <h1 className="display-2">BOOKING IS NOT LIVE YET</h1>
+        <p className="mt-3 text-sm text-ink-2">
+          Real vehicle search, availability and checkout are being connected in the next production phases.
+        </p>
+        <Link href="/" className="btn btn-secondary mt-6">Return to homepage</Link>
+      </div>
+    );
+  }
 
   async function validateLocation(pc: string) {
     if (pc.trim().length < 3) return;
@@ -479,7 +496,7 @@ function BookingWizard() {
                   )}
                   {zone && (
                     <div className="text-ok text-xs flex items-center gap-1.5 mt-2 font-semibold">
-                      <CheckCircle2 size={14} /> We cover {zone.zone_name}. {zone.callout_charge === 0 ? 'Free mobile callout.' : `£${zone.callout_charge / 100} callout fee applies.`}
+                      <CheckCircle2 size={14} /> Postcode accepted. Any applicable location charge will be shown before payment.
                     </div>
                   )}
                 </div>

@@ -1,171 +1,211 @@
+import Image from 'next/image';
 import Link from 'next/link';
-import { ShieldCheck, Clock, MapPin, Wrench } from 'lucide-react';
+import {
+  ArrowRight,
+  Building2,
+  Car,
+  CheckCircle2,
+  Home,
+  MapPin,
+  ScanSearch,
+  ShieldCheck,
+} from 'lucide-react';
 import MStripe from '@/components/ui/MStripe';
 import ScrollReveal from '@/components/animations/ScrollReveal';
+import HeroTyreMotion from '@/components/animations/HeroTyreMotion';
 import TyreFinder from '@/components/booking/TyreFinder';
-import TyreScene from '@/components/3d/TyreSceneClient';
 
 const STEPS = [
   {
     n: '01',
-    title: 'Tell us your postcode and reg',
-    body: 'We check we cover you, then pull the exact tyre size your vehicle left the factory on.',
+    title: 'Check the fitting postcode',
+    body: 'Start with the location so the booking journey only continues when the address is inside an active service area.',
   },
   {
     n: '02',
-    title: 'Pick your tyres',
-    body: 'Only tyres that actually fit. Budget to premium, with the price you pay shown fitted.',
+    title: 'Match the vehicle or size',
+    body: 'Use the registration lookup, or enter the three numbers printed on the tyre sidewall yourself.',
   },
   {
     n: '03',
-    title: 'Choose a slot, pay a deposit',
-    body: 'Two-hour windows, seven days out. £50 holds it. The balance is due on the day.',
+    title: 'Review tyres and continue',
+    body: 'Compare compatible options, confirm the fitment details and continue into the appointment flow.',
   },
 ];
 
-const TRUST = [
-  { icon: Clock,       label: 'Same-day slots',    sub: 'Book before 11am' },
-  { icon: MapPin,      label: 'We come to you',    sub: 'Home, work, roadside' },
-  { icon: ShieldCheck, label: 'Fully insured',     sub: 'Every fitting covered' },
-  { icon: Wrench,      label: 'OEM-spec fitment',  sub: 'Manufacturer sizes' },
+const JOURNEY_PROOF = [
+  { icon: MapPin, label: 'Location first', sub: 'Postcode-based service check' },
+  { icon: Car, label: 'Two ways to search', sub: 'Registration or tyre size' },
+  { icon: ScanSearch, label: 'Fitment confirmation', sub: 'Review before selection' },
+  { icon: ShieldCheck, label: 'Clear next steps', sub: 'No hidden navigation' },
+];
+
+const FITTING_CONTEXTS = [
+  {
+    icon: Home,
+    title: 'At home',
+    body: 'Choose an accessible fitting address and keep the booking details tied to the vehicle.',
+  },
+  {
+    icon: Building2,
+    title: 'At work',
+    body: 'Use the same location-first journey for an office or workplace parking area.',
+  },
+  {
+    icon: MapPin,
+    title: 'At your location',
+    body: 'Start with the postcode so availability can be checked before you spend time choosing tyres.',
+  },
 ];
 
 export default function HomePage() {
   return (
     <>
-      {/* ══════════════ HERO ══════════════ */}
-      <section className="relative overflow-hidden bg-void">
-        <div className="container-g grid min-h-[calc(100svh-68px)] items-center gap-8 py-12 lg:grid-cols-[1.05fr_1fr] lg:gap-4 lg:py-0">
-          {/* Copy */}
-          <div className="order-2 lg:order-1">
-            <MStripe className="mb-6" />
+      <section className="hero-shell" aria-labelledby="hero-title">
+        <div className="hero-grid-lines" aria-hidden="true" />
+        <div className="hero-glow" aria-hidden="true" />
 
-            <p className="label mb-4">London mobile tyre fitting</p>
+        <div className="container-g hero-layout">
+          <div className="hero-copy">
+            <MStripe className="mb-5" />
 
-            <h1 className="display-hero mb-6 max-w-[14ch]">
-              Tyres fitted
-              <br />
-              <span className="text-brand">where you are</span>
+            <h1 id="hero-title" className="hero-title">
+              The right tyres.
+              <span>Fitted where you need them.</span>
             </h1>
 
-            <p className="mb-10 max-w-[46ch] text-lg text-ink-2">
-              No garage. No waiting room. No lifting the car onto a trolley jack in
-              the rain. Tell us where you are and we bring the workshop.
+            <p className="hero-lede">
+              Check your postcode, identify the correct tyre size and move into
+              booking through one focused, mobile-first journey.
             </p>
 
-            <TyreFinder />
+            <div id="tyre-finder" className="hero-finder-anchor">
+              <TyreFinder />
+            </div>
+
+            <div className="hero-microproof" aria-label="Search options">
+              <span><CheckCircle2 size={14} /> Registration lookup</span>
+              <span><CheckCircle2 size={14} /> Manual size entry</span>
+              <span><CheckCircle2 size={14} /> No account required</span>
+            </div>
           </div>
 
-          {/* 3D */}
-          <div className="order-1 h-[42svh] lg:order-2 lg:h-[calc(100svh-68px)]">
-            <TyreScene className="h-full w-full" />
+          <div className="hero-visual" aria-label="Performance tyre product visual">
+            <div className="hero-orbit hero-orbit-one" aria-hidden="true" />
+            <div className="hero-orbit hero-orbit-two" aria-hidden="true" />
+            <HeroTyreMotion>
+              <Image
+                src="/images/hero-tyre-v2.png"
+                alt="Black performance tyre with a graphite alloy wheel"
+                width={1254}
+                height={1254}
+                priority
+                sizes="(max-width: 767px) 340px, (max-width: 1199px) 44vw, 610px"
+                className="hero-tyre-image"
+              />
+            </HeroTyreMotion>
+            <div className="hero-spec-card" aria-hidden="true">
+              <span className="hero-spec-kicker">Fitment search</span>
+              <strong>REG → SIZE → TYRE</strong>
+              <span>One clear route to the right option</span>
+            </div>
           </div>
         </div>
 
-        {/* Ambient brand glow behind the tyre */}
-        <div
-          className="pointer-events-none absolute right-0 top-1/2 -z-10 h-[520px] w-[520px] -translate-y-1/2 translate-x-1/4 rounded-full blur-[140px]"
-          style={{ background: 'rgba(56,189,248,0.10)' }}
-          aria-hidden="true"
-        />
+        <a href="#how" className="hero-scroll-cue" aria-label="See how it works">
+          <span>How it works</span>
+          <span className="hero-scroll-line" aria-hidden="true" />
+        </a>
       </section>
 
-      {/* ══════════════ TRUST STRIP ══════════════ */}
-      <section className="border-y border-line bg-surface-2">
+      <section className="journey-strip" aria-label="Booking journey highlights">
         <div className="container-g">
-          <ScrollReveal stagger={0.08} className="grid grid-cols-2 divide-line md:grid-cols-4 md:divide-x">
-            {TRUST.map(({ icon: Icon, label, sub }) => (
-              <div key={label} className="flex items-center gap-3 px-2 py-6 md:justify-center md:px-6">
-                <Icon size={20} className="shrink-0 text-brand" strokeWidth={1.5} />
+          <div className="grid grid-cols-2 lg:grid-cols-4">
+            {JOURNEY_PROOF.map(({ icon: Icon, label, sub }) => (
+              <div key={label} className="journey-proof-item">
+                <Icon size={19} className="shrink-0 text-brand" strokeWidth={1.7} />
                 <div>
-                  <div className="text-sm font-semibold">{label}</div>
+                  <div className="text-sm font-semibold text-ink-1">{label}</div>
                   <div className="text-xs text-ink-3">{sub}</div>
                 </div>
               </div>
             ))}
-          </ScrollReveal>
+          </div>
         </div>
       </section>
 
-      {/* ══════════════ HOW IT WORKS ══════════════ */}
-      <section id="how" className="section">
+      <section id="how" className="section content-auto">
         <div className="container-g">
           <ScrollReveal>
             <MStripe className="mb-6" />
-            <p className="label mb-3">The process</p>
-            <h2 className="display-1 mb-4 max-w-[16ch]">Three steps, about two minutes</h2>
+            <p className="label mb-3">A shorter route to the right fit</p>
+            <h2 className="display-1 mb-5 max-w-[14ch]">From postcode to tyre choice</h2>
             <p className="mb-14 max-w-readable text-ink-2">
-              Most people are booked before the kettle boils.
+              Each step asks for only the information needed to unlock the next
+              decision. You can always switch to manual tyre-size entry.
             </p>
           </ScrollReveal>
 
-          <ScrollReveal stagger={0.12} className="grid gap-6 md:grid-cols-3">
-            {STEPS.map((s) => (
-              <div key={s.n} className="card card-hover">
-                <div className="display-2 mb-4 text-brand">{s.n}</div>
-                <h3 className="mb-2 text-lg font-bold">{s.title}</h3>
-                <p className="text-sm leading-relaxed text-ink-2">{s.body}</p>
-              </div>
+          <ScrollReveal stagger={0.08} className="grid gap-5 md:grid-cols-3">
+            {STEPS.map((step) => (
+              <article key={step.n} className="process-card">
+                <div className="process-number">{step.n}</div>
+                <h3>{step.title}</h3>
+                <p>{step.body}</p>
+              </article>
             ))}
           </ScrollReveal>
         </div>
       </section>
 
-      {/* ══════════════ COVERAGE ══════════════ */}
-      <section id="coverage" className="section border-t border-line bg-surface-2">
-        <div className="container-g grid gap-12 lg:grid-cols-2 lg:items-center">
-          <ScrollReveal>
-            <MStripe className="mb-6" />
-            <p className="label mb-3">Where we work</p>
-            <h2 className="display-1 mb-5 max-w-[14ch]">Across London, van-ready</h2>
-            <p className="mb-8 max-w-readable text-ink-2">
-              Our fitters carry everything on board: balancer, torque wrench, valve
-              stems, TPMS kit. If we cover your postcode, we can fit on your
-              driveway, in your office car park, or at the roadside.
-            </p>
-            <Link href="/booking" className="btn btn-secondary">
-              Check your postcode
-            </Link>
+      <section id="coverage" className="section content-auto border-t border-line bg-surface-2">
+        <div className="container-g">
+          <ScrollReveal className="mb-12 grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
+            <div>
+              <MStripe className="mb-6" />
+              <p className="label mb-3">Built around the fitting location</p>
+              <h2 className="display-1 max-w-[12ch]">Start where the vehicle is</h2>
+            </div>
+            <div>
+              <p className="max-w-readable text-ink-2">
+                The postcode check sits at the beginning—not buried later in the
+                funnel—so the service area is established before vehicle and tyre
+                details are entered.
+              </p>
+              <Link href="/#tyre-finder" className="btn btn-secondary mt-7">
+                Check a postcode <ArrowRight size={16} />
+              </Link>
+            </div>
           </ScrollReveal>
 
-          <ScrollReveal delay={0.15}>
-            <div className="card">
-              <div className="label mb-5">Current service areas</div>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
-                {[
-                  'E1 Whitechapel', 'E2 Bethnal Green', 'E14 Canary Wharf',
-                  'EC1 Clerkenwell', 'EC2 City', 'N1 Islington',
-                  'SE1 Southwark', 'SW1 Westminster', 'W1 West End',
-                ].map((a) => (
-                  <div key={a} className="flex items-center gap-2 text-ink-2">
-                    <span className="h-1 w-1 shrink-0 bg-brand" aria-hidden="true" />
-                    {a}
-                  </div>
-                ))}
-              </div>
-              <p className="mt-6 border-t border-line pt-4 text-xs text-ink-3">
-                Outside these areas? Enter your postcode above and we will tell you
-                when we get there.
-              </p>
-            </div>
+          <ScrollReveal stagger={0.08} className="grid gap-5 md:grid-cols-3">
+            {FITTING_CONTEXTS.map(({ icon: Icon, title, body }) => (
+              <article key={title} className="context-card">
+                <div className="context-icon"><Icon size={22} /></div>
+                <h3>{title}</h3>
+                <p>{body}</p>
+              </article>
+            ))}
           </ScrollReveal>
         </div>
       </section>
 
-      {/* ══════════════ CLOSING CTA ══════════════ */}
-      <section className="section bg-void">
-        <div className="container-g text-center">
-          <ScrollReveal>
-            <MStripe className="mx-auto mb-8" />
-            <h2 className="display-1 mx-auto mb-6 max-w-[18ch]">
-              Flat tyre now? We can be there today.
-            </h2>
-            <p className="mx-auto mb-10 max-w-[44ch] text-ink-2">
-              Book before 11am and there is usually an afternoon slot free.
-            </p>
-            <Link href="/booking" className="btn btn-primary">
-              Book a fitting
-            </Link>
+      <section className="cta-shell content-auto">
+        <div className="container-g">
+          <ScrollReveal className="cta-panel">
+            <div>
+              <p className="label mb-3 text-brand">Ready when you are</p>
+              <h2 className="display-1 max-w-[15ch]">Find the size. See the options.</h2>
+            </div>
+            <div className="max-w-[420px] lg:text-right">
+              <p className="mb-7 text-ink-2">
+                Start with a postcode, then use the registration or the numbers on
+                the tyre sidewall.
+              </p>
+              <Link href="/#tyre-finder" className="btn btn-primary">
+                Start tyre search <ArrowRight size={16} />
+              </Link>
+            </div>
           </ScrollReveal>
         </div>
       </section>

@@ -7,6 +7,7 @@ import { checkoutSchema } from '@/lib/validation';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 import { normaliseReg } from '@/lib/utils';
 import { localStore } from '@/lib/mockData';
+import { isMockDataEnabled } from '@/lib/mock-mode';
 import type { BookingWithDetails } from '@/types';
 
 export const runtime = 'nodejs';
@@ -17,6 +18,17 @@ export const runtime = 'nodejs';
  * Creates a booking and returns a Stripe client_secret or dev demo payment token.
  */
 export async function POST(req: Request) {
+  if (!isMockDataEnabled()) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: 'not_implemented',
+        message: 'Production checkout is not available until Phase 3.',
+      },
+      { status: 501 },
+    );
+  }
+
   const ip = getClientIp(req);
 
   // 1 ── Rate limit

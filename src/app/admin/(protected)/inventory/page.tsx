@@ -5,10 +5,13 @@ import { Package, Plus, Minus, Search, Edit3, Check, AlertCircle } from 'lucide-
 import AdminNav from '@/components/admin/AdminNav';
 import MStripe from '@/components/ui/MStripe';
 import { localStore } from '@/lib/mockData';
+import { isMockDataEnabled } from '@/lib/mock-mode';
+import AdminDataPending from '@/components/admin/AdminDataPending';
 import { formatPrice, formatTyreSize } from '@/lib/utils';
 import type { Tyre } from '@/types';
 
 export default function AdminInventoryPage() {
+  const mockMode = isMockDataEnabled();
   const [tyres, setTyres] = useState<Tyre[]>([]);
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -26,8 +29,12 @@ export default function AdminInventoryPage() {
   const [stock, setStock] = useState(8);
 
   useEffect(() => {
-    setTyres(localStore.getAllTyres());
-  }, []);
+    setTyres(mockMode ? localStore.getAllTyres() : []);
+  }, [mockMode]);
+
+  if (!mockMode) {
+    return <AdminDataPending title="INVENTORY DATA PENDING" />;
+  }
 
   function handleStockChange(id: string, delta: number) {
     const tyre = tyres.find((t) => t.id === id);
@@ -91,7 +98,7 @@ export default function AdminInventoryPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="display-2 leading-none">TYRE INVENTORY &amp; STOCK</h1>
-          <p className="text-xs text-ink-3 mt-1">Live warehouse catalogue, pricing margins, and van replenishment</p>
+          <p className="text-xs text-ink-3 mt-1">Development catalogue, pricing, stock, and replenishment controls</p>
         </div>
 
         <div className="flex items-center gap-3">

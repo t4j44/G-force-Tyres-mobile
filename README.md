@@ -1,14 +1,16 @@
 # G Force Tyres — Mobile Tyre Fitting Platform
 
-Next.js 15 booking and commerce platform. Vehicle lookup, tyre catalogue,
-slot booking with soft locks, Stripe deposits, and a customer-facing 3D hero.
+Next.js 15 mobile-tyre frontend with a Phase 1 local code foundation: versioned
+V3 migration SQL, environment safety controls, Supabase SSR admin authentication,
+role authorization and RLS definitions. Live Supabase acceptance is still blocked.
 
-**Build status when shipped to you:** `npm run build` passes, `tsc --noEmit`
-reports 0 errors, `npm audit --omit=dev` reports 0 vulnerabilities.
+**Current local checks:** `npm run build`, `npm run typecheck`, and
+`npm run test:security` pass. Lint exits successfully with 0 errors and 44 known
+warnings documented in the project status report.
 
-**What that does *not* mean:** none of the money paths have been exercised
-against real Stripe or real Supabase. Read [Before you go live](#before-you-go-live)
-before this touches a customer.
+**This is not production-ready:** real customer search is Phase 2 and persistent
+booking/holds/Stripe/email are Phase 3. Those paths are deliberately unavailable
+outside explicit development mock mode. Read `docs/PHASE1_REPORT.md`.
 
 ---
 
@@ -20,7 +22,8 @@ cp .env.example .env.local     # then fill it in — see below
 npm run dev                    # http://localhost:3000
 ```
 
-The site boots with an empty catalogue until you run the SQL below.
+The site boots without a real catalogue. The V3 migrations create the structure
+only; approved production catalogue data has not been supplied or imported.
 
 ---
 
@@ -28,89 +31,65 @@ The site boots with an empty catalogue until you run the SQL below.
 
 Create a project at supabase.com (free tier is enough), then:
 
-1. **SQL Editor → New query →** paste `supabase/schema.sql` → Run
-2. **SQL Editor → New query →** paste `supabase/seed.sql` → Run
+1. Apply the ordered files in `supabase/migrations/` to a disposable Supabase project.
+2. Run every live scenario in `docs/ADMIN_SECURITY_TESTS.md` with test identities.
+3. Only after those tests pass, follow `docs/ADMIN_BOOTSTRAP.md` to create the
+   real owner account.
 
-`seed.sql` gives you 20 tyres across 4 common UK sizes, 10 London service
-zones, 2 fitters, and 3 weeks of weekday slots — enough to click through
-the whole flow.
+Do not run the legacy `supabase/seed.sql` against the V3 schema. It targets the
+old mutable schema and exists only as historical demo material.
 
 Then **Settings → API** and copy into `.env.local`:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=<server-only service role key>
 ```
 
 > The service key bypasses Row Level Security completely. It belongs in
 > `.env.local` and your host's environment variables — never in a component,
 > never in git.
 
-Optionally schedule the cleanup job (Database → Extensions → enable `pg_cron`):
-
-```sql
-select cron.schedule('purge-holds', '*/5 * * * *', 'select purge_expired_holds()');
-```
-
-Without it, abandoned slot holds linger for their full 15 minutes rather
-than being swept early. Not fatal, but slots free up slower.
-
----
-
 ## 2. Stripe
 
-Test mode keys from dashboard.stripe.com/test/apikeys:
-
-```
-STRIPE_SECRET_KEY=sk_test_...
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
-```
-
-For the webhook, run the Stripe CLI in a second terminal:
-
-```bash
-stripe listen --forward-to localhost:3000/api/stripe/webhook
-```
-
-It prints `whsec_...` — put that in `STRIPE_WEBHOOK_SECRET`.
-
-**The webhook is not optional.** A booking only becomes `confirmed` when
-`payment_intent.succeeded` arrives. Without the CLI running locally, every
-test booking will sit at `pending_payment` forever and you will think the
-code is broken when it is working exactly as designed.
-
-Test card: `4242 4242 4242 4242`, any future expiry, any CVC.
+Stripe Checkout, verified webhook persistence, slot/stock holds and booking
+transactions are reserved for Phase 3. Do not collect card data through the
+legacy mock form or configure a public commerce launch from the current code.
 
 ---
 
-## 3. Optional services
+## 3. Production integrations
 
-Everything below is optional. The app runs without any of it.
+Development can run without live integrations. Production startup intentionally
+requires the complete `.env.example` contract; no integration silently falls
+back to fictional data.
 
 | Variable | Without it |
 |---|---|
-| `ONEAUTO_API_KEY` | Registration lookup returns nothing; users enter tyre size manually. This is a valid launch mode and costs £0. |
-| `RESEND_API_KEY` | Emails are logged to console instead of sent. |
+| `ONEAUTO_API_KEY` | Phase 2 vehicle search remains unavailable. |
+| `RESEND_API_KEY` | Phase 3 email remains unavailable. |
 | `TURNSTILE_SECRET_KEY` | Bot check is skipped in dev. **In production the code refuses requests when this is missing** — that is deliberate. |
 
 ---
 
-## Architecture
+## Target architecture (Phase 2–3, not current completion)
 
 ```
 Browser ──► Next.js API routes ──► Supabase (service key, bypasses RLS)
                     │
                     ├──► Stripe        (deposit PaymentIntent)
-                    ├──► OneAutoAPI    (VRM → OEM tyre size, cached 60 days)
+                    ├──► OneAutoAPI    (VRM → OEM tyre size, encrypted cache <=24h)
                     ├──► Postcodes.io  (postcode validation, free)
                     └──► Resend        (transactional email)
 ```
 
-The browser's anon key can only read the public catalogue: tyres, slots,
-zones, settings. Every write and every read of customer data goes through
-an API route. That is why `schema.sql` has no "anon can insert booking"
-policy — the browser never writes.
+The V3 RLS migration is written to grant anonymous access only to active,
+product-safe catalogue columns and active, safe service-zone columns. It is
+written to deny anonymous access to customers, payments, bookings, webhook
+events, audit logs and internal settings. This posture is not confirmed until
+the migrations and live role tests pass against an authorized Supabase project.
+All future mutations must go through authenticated server routes.
 
 ### Money
 
@@ -118,31 +97,33 @@ Every monetary value in the codebase is an **integer number of pence**.
 £149.00 is `14900`. There are no floats anywhere in the money path.
 `formatPrice()` in `lib/utils.ts` is the only place money becomes a string.
 
-### The two files that matter most
+### Phase 3 payment invariants
 
-**`src/lib/pricing.ts`** — the browser sends tyre IDs and quantities.
-It never sends a price. Every figure that reaches Stripe is recalculated
-here from the database. If you ever change this to accept a client-supplied
-price, someone will pay £1 for four Michelins.
+These are requirements, not claims about the current implementation:
 
-**`src/app/api/stripe/webhook/route.ts`** — the only place a booking becomes
-`confirmed`. The browser's success redirect is a UI convenience, not proof
-of payment. Signature verification runs before anything else touches the DB.
+- the browser must send product IDs and quantities, never an authoritative price;
+- server code must recalculate every amount from persistent catalogue data;
+- only a signature-verified, idempotently processed Stripe webhook may confirm
+  a paid booking; and
+- a browser success redirect must never be treated as proof of payment.
 
 ### Slot locking
 
-Two customers hitting the last slot simultaneously is handled in Postgres,
-not JavaScript. `create_slot_hold()` takes a row lock on the slot before
-counting availability, so the race cannot happen. Holds expire after 15
-minutes.
+The V3 migrations declare the data needed for slot and inventory holds, but
+the atomic hold transaction is not implemented or live-tested yet. Phase 3
+must use a PostgreSQL transaction with row locking so two customers cannot
+reserve the last capacity or stock simultaneously. The intended hold window is
+15 minutes and still requires owner confirmation.
 
 ---
 
-## Deployment
+## Hosting preparation
 
 ### Vercel (simplest)
 
-Push to GitHub, import at vercel.com, paste the environment variables. Done.
+After the Phase 1 live acceptance checks and the later booking/payment phases
+pass, push to GitHub, import at Vercel and configure every production variable.
+The current build must not be opened to customers.
 
 ### Cloudflare Workers (£0 fixed cost)
 
@@ -151,10 +132,11 @@ npm run pages:build
 npm run pages:deploy
 ```
 
-Set the same environment variables in the Cloudflare dashboard.
+This is a future hosting path. Validate framework compatibility and set every
+production variable before using it.
 
-Either way, **update the Stripe webhook endpoint** to your live URL at
-dashboard.stripe.com/webhooks, subscribing to:
+During Phase 3 payment implementation, configure the Stripe webhook endpoint at
+your live URL to subscribe to:
 
 - `payment_intent.succeeded`
 - `payment_intent.payment_failed`
@@ -167,7 +149,7 @@ dashboard.stripe.com/webhooks, subscribing to:
 This codebase compiles and builds. It has not been run against real
 services. Work through this list before a paying customer sees it.
 
-### Money paths — non-negotiable
+### Phase 3 money paths — non-negotiable
 
 - [ ] Complete a test booking end to end with card `4242 4242 4242 4242`
 - [ ] Confirm the booking flips `pending_payment` → `confirmed` in Supabase
@@ -181,7 +163,7 @@ services. Work through this list before a paying customer sees it.
       expired" message, not a crash
 - [ ] Process one real £1 live-mode payment before opening to customers
 
-### VRM lookup
+### Phase 2 VRM lookup
 
 - [ ] **Log one real OneAutoAPI response and verify the field names in
       `normaliseOneAutoResponse()` actually match.** The parser is written
@@ -201,8 +183,9 @@ services. Work through this list before a paying customer sees it.
 ### Frontend
 
 - [ ] Booking flow on a real mid-range Android phone, not just DevTools
-- [ ] 3D hero: check the frame rate on that same phone. If it stutters,
-      raise the fallback threshold in `useCanRender3D()`.
+- [ ] Hero motion: check frame pacing on that same phone. The active hero uses
+      compositor-friendly CSS depth motion rather than WebGL; reduce or disable
+      the idle motion if a target device still stutters.
 - [ ] Keyboard-only pass through the entire booking flow
 - [ ] Enable "reduce motion" in OS settings and confirm the site still works
 
@@ -212,15 +195,15 @@ services. Work through this list before a paying customer sees it.
 
 These are deliberately unbuilt, not oversights:
 
-- **Admin dashboard** — schema, RLS, and audit logging are in place; the UI
-  is not. Bookings can be managed from the Supabase table editor in the
-  meantime.
-- **Manage-booking page** (`/manage/[token]`) — the route and secure token
-  exist; the reschedule/cancel UI does not.
+- **Admin operations** — protected Phase 1 shells exist, but persistent booking,
+  inventory and slot operations are Phase 3. Do not use a production Supabase
+  table editor as a substitute for the missing audited workflows.
+- **Manage-booking page** (`/manage/[token]`) — a route shell exists; persistent
+  secure tokens and reschedule/cancel workflows are Phase 3.
 - **Automated tests** — no Playwright or Vitest suite. The checklist above
   is the manual substitute.
-- **Payment page** (`/booking/pay`) — the API returns a `client_secret`;
-  the Stripe Elements form is not wired up.
+- **Payment page** (`/booking/pay`) — the development mock is gated; no real
+  PaymentIntent or Stripe Elements flow exists yet.
 
 ---
 
@@ -229,24 +212,25 @@ These are deliberately unbuilt, not oversights:
 ```
 src/
 ├── app/
-│   ├── page.tsx                 Homepage: 3D hero + tyre finder
+│   ├── page.tsx                 Homepage: CSS-depth hero + tyre finder
 │   ├── tyres/                   Catalogue results
 │   ├── confirmation/[ref]/      Post-payment summary
 │   └── api/
 │       ├── vrm/lookup/          Gated vehicle lookup
-│       ├── holds/               Slot soft-locking
-│       ├── checkout/create/     Booking + PaymentIntent
-│       └── stripe/webhook/      Payment confirmation
+│       ├── admin/               Phase 1 authentication and guarded mutations
+│       ├── holds/               Development mock gate; Phase 3 pending
+│       └── checkout/            Development mock gate; Phase 3 pending
 ├── components/
-│   ├── 3d/                      React Three Fiber tyre
-│   ├── animations/              Lenis + GSAP scroll reveals
+│   ├── 3d/                      Legacy React Three Fiber scene (inactive)
+│   ├── animations/              CSS/IntersectionObserver reveals + hero tilt
 │   ├── booking/                 TyreFinder gate
 │   ├── layout/                  Header, Footer
 │   └── ui/                      MStripe
 ├── lib/
-│   ├── pricing.ts               ⚠ server-side price authority
-│   ├── supabase.ts              anon + service clients
-│   ├── oneauto.ts               VRM lookup with cache
+│   ├── auth/admin.ts            server-side role and active-account guard
+│   ├── env*.ts                  validated public/server environment contracts
+│   ├── supabase/                browser, SSR and server-only admin clients
+│   ├── oneauto.ts               Phase 2 integration boundary
 │   ├── postcodes.ts             coverage checking
 │   ├── rateLimit.ts             Postgres-backed throttling
 │   ├── turnstile.ts             bot verification
@@ -255,8 +239,9 @@ src/
 └── types/index.ts               shared types
 
 supabase/
-├── schema.sql                   tables, RLS, atomic functions
-└── seed.sql                     demo catalogue and slots
+├── migrations/                 ordered V3 schema, policies and indexes
+├── schema.sql                   legacy pre-V3 reference only
+└── seed.sql                     legacy demo data; do not apply to V3
 
 DESIGN.md                        design system — read before UI work
 ```

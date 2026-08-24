@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { localStore } from '@/lib/mockData';
-import { isSupabaseConfigured, createServiceClient } from '@/lib/supabase';
 import { z } from 'zod';
+import { adminErrorResponse, requireAdmin } from '@/lib/auth/admin';
+import { isMockDataEnabled } from '@/lib/mock-mode';
+import { writeAuditLog } from '@/lib/audit';
 
 export const runtime = 'nodejs';
 
@@ -19,6 +21,13 @@ const generateSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  let admin;
+  try {
+    admin = await requireAdmin();
+  } catch (error) {
+    return adminErrorResponse(error);
+  }
+
   try {
     const body = await req.json();
     const parsed = generateSchema.safeParse(body);
@@ -29,47 +38,27 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!isMockDataEnabled()) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'not_implemented',
+          message: 'Persistent slot generation is reserved for Phase 3.',
+        },
+        { status: 501 },
+      );
+    }
+
     const { startDate, weeks, days, timeWindows, capacity } = parsed.data;
 
     // Generate in local store
     const count = localStore.generateRecurringSlots(startDate, weeks, days, timeWindows, capacity);
 
-    // If Supabase configured, insert in DB
-    if (isSupabaseConfigured()) {
-      try {
-        const db = createServiceClient();
-        const start = new Date(startDate);
-        const recordsToInsert = [];
-
-        for (let w = 0; w < weeks; w++) {
-          for (const dayOfWeek of days) {
-            const d = new Date(start);
-            const currentDay = d.getDay();
-            const diff = (dayOfWeek - currentDay + 7) % 7;
-            d.setDate(d.getDate() + w * 7 + diff);
-            const dateStr = d.toISOString().split('T')[0];
-
-            for (const tw of timeWindows) {
-              recordsToInsert.push({
-                slot_date: dateStr,
-                start_time: tw.start.length === 5 ? `${tw.start}:00` : tw.start,
-                end_time: tw.end.length === 5 ? `${tw.end}:00` : tw.end,
-                max_bookings: capacity,
-                active: true,
-              });
-            }
-          }
-        }
-
-        if (recordsToInsert.length > 0) {
-          await db
-            .from('booking_slots')
-            .upsert(recordsToInsert, { onConflict: 'slot_date,start_time' });
-        }
-      } catch (dbErr) {
-        console.error('[admin/slots/generate] db error', dbErr);
-      }
-    }
+    await writeAuditLog(admin.profile, {
+      action: 'DEMO_SLOTS_GENERATED',
+      resourceType: 'booking_slots',
+      metadata: { startDate, weeks, days, timeWindows, capacity, generatedCount: count },
+    }).catch(() => undefined);
 
     return NextResponse.json({
       ok: true,

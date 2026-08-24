@@ -1,27 +1,38 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { Menu, X, Wrench, PhoneCall } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { usePathname } from 'next/navigation';
+import { useEffect, useState, type MouseEvent } from 'react';
+import { Menu, X, Wrench } from 'lucide-react';
 
 const NAV = [
+  { href: '/#tyre-finder', label: 'Find tyres' },
   { href: '/#how',      label: 'How it works' },
-  { href: '/#coverage', label: 'Coverage' },
+  { href: '/#coverage', label: 'Fitting locations' },
   { href: '/tyres',     label: 'Tyres' },
-  { href: '/#contact',  label: 'Contact' },
 ];
 
 export default function Header() {
-  const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  function handleBrandClick(event: MouseEvent<HTMLAnchorElement>) {
+    setOpen(false);
+
+    // A normal Link handles navigation from every other route. On the home
+    // route, explicitly clear any section hash and return to the top so the
+    // brand mark never feels like an inert link.
+    if (pathname !== '/') return;
+
+    event.preventDefault();
+    window.history.replaceState(window.history.state, '', '/');
+    window.scrollTo({
+      top: 0,
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'auto'
+        : 'smooth',
+    });
+  }
 
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
@@ -37,15 +48,14 @@ export default function Header() {
 
   return (
     <>
-      <header
-        className={cn(
-          'sticky top-0 z-50 border-b transition-colors duration-200',
-          scrolled ? 'border-line' : 'border-transparent'
-        )}
-        style={{ background: 'rgba(13,13,13,0.88)', backdropFilter: 'blur(20px) saturate(180%)' }}
-      >
+      <header className="site-header sticky top-0 z-50 border-b border-line">
         <div className="container-g flex h-[68px] items-center justify-between">
-          <Link href="/" className="text-lg font-bold tracking-tight flex items-center gap-1.5 focus:outline-none">
+          <Link
+            href="/"
+            onClick={handleBrandClick}
+            aria-label="G Force Tyres home"
+            className="flex items-center gap-1.5 rounded text-lg font-bold tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-4 focus-visible:ring-offset-surface"
+          >
             <span>G FORCE</span>
             <span className="text-brand">TYRES</span>
           </Link>
@@ -64,17 +74,22 @@ export default function Header() {
               <Wrench size={13} /> Staff
             </Link>
             <Link href="/booking" className="btn btn-primary btn-sm">
-              Book now
+              Start booking
             </Link>
           </nav>
 
-          <button
-            onClick={() => setOpen(true)}
-            className="flex h-11 w-11 items-center justify-center md:hidden text-ink-1 rounded focus:ring-2 focus:ring-brand"
-            aria-label="Open navigation menu"
-          >
-            <Menu size={24} />
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <Link href="/#tyre-finder" className="mobile-header-cta">
+              Find tyres
+            </Link>
+            <button
+              onClick={() => setOpen(true)}
+              className="flex h-11 w-11 items-center justify-center text-ink-1 rounded focus:ring-2 focus:ring-brand"
+              aria-label="Open navigation menu"
+            >
+              <Menu size={23} />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -83,7 +98,14 @@ export default function Header() {
         <div className="fixed inset-0 z-[60] bg-surface flex flex-col justify-between md:hidden animate-in fade-in duration-200">
           <div>
             <div className="container-g flex h-[68px] items-center justify-between border-b border-line">
-              <span className="text-lg font-bold">G FORCE <span className="text-brand">TYRES</span></span>
+              <Link
+                href="/"
+                onClick={handleBrandClick}
+                aria-label="G Force Tyres home"
+                className="rounded text-lg font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              >
+                G FORCE <span className="text-brand">TYRES</span>
+              </Link>
               <button
                 onClick={() => setOpen(false)}
                 className="flex h-11 w-11 items-center justify-center text-ink-1 rounded focus:ring-2 focus:ring-brand"
@@ -104,20 +126,18 @@ export default function Header() {
                 </Link>
               ))}
               <Link
-                href="/booking"
+                href="/#tyre-finder"
                 onClick={() => setOpen(false)}
                 className="btn btn-primary mt-6 w-full"
               >
-                Book now
+                Start tyre search
               </Link>
             </nav>
           </div>
 
           <div className="container-g pb-8 border-t border-line pt-6 text-xs text-ink-3 space-y-3">
-            <div className="flex items-center justify-between">
-              <a href="tel:02079460991" className="flex items-center gap-1.5 text-ink-1 font-semibold">
-                <PhoneCall size={14} className="text-brand" /> 020 7946 0991
-              </a>
+            <div className="flex items-center justify-between gap-4">
+              <span>Location-first mobile tyre booking</span>
               <Link
                 href="/admin/login"
                 onClick={() => setOpen(false)}
@@ -126,7 +146,7 @@ export default function Header() {
                 Operator Login &rarr;
               </Link>
             </div>
-            <div>London Mobile Tyre Fitting · Home, Work &amp; Roadside</div>
+            <div>Use registration lookup or enter the tyre size manually.</div>
           </div>
         </div>
       )}

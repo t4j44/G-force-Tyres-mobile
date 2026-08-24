@@ -71,7 +71,7 @@ export const tyreSizeSchema = z.object({
 export const vrmLookupSchema = z.object({
   registration: ukRegSchema,
   postcode: ukPostcodeSchema,
-  email: emailSchema,
+  email: emailSchema.optional(),
   turnstileToken: z.string().optional(),
 });
 

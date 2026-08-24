@@ -1,6 +1,7 @@
 import { createServiceClient, isSupabaseConfigured } from './supabase';
 import { normalisePostcode } from './utils';
 import { MOCK_SERVICE_ZONES } from './mockData';
+import { isMockDataEnabled } from './mock-mode';
 import type { CoverageResult, ServiceZone } from '@/types';
 
 /** Postcodes.io — free, no key, no rate limit for our volume. */
@@ -32,7 +33,7 @@ export async function checkCoverage(postcode: string): Promise<CoverageResult> {
 
   let data: ServiceZone[] = MOCK_SERVICE_ZONES;
 
-  if (isSupabaseConfigured()) {
+  if (!isMockDataEnabled() && isSupabaseConfigured()) {
     try {
       const db = createServiceClient();
       const res = await db

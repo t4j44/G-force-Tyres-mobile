@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server';
 import { localStore } from '@/lib/mockData';
+import { isMockDataEnabled } from '@/lib/mock-mode';
 
 export const runtime = 'nodejs';
 
 /** POST /api/checkout/confirm-mock — confirm a booking in test/local dev mode */
 export async function POST(req: Request) {
+  if (!isMockDataEnabled()) {
+    return NextResponse.json({ ok: false, error: 'not_found' }, { status: 404 });
+  }
+
   try {
     const { booking_ref } = await req.json();
     if (!booking_ref) {

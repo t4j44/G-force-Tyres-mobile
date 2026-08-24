@@ -1,56 +1,65 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 
 interface Props {
   children: React.ReactNode;
   delay?: number;
   y?: number;
   className?: string;
-  /** Stagger direct children instead of animating the wrapper as one block. */
   stagger?: number;
 }
 
+type RevealStyle = CSSProperties & {
+  '--reveal-delay': string;
+  '--reveal-y': string;
+};
+
 /**
- * Fade + rise on scroll. The workhorse animation for every section.
- * Falls back to plain visible content when reduced motion is set.
+ * One IntersectionObserver and compositor-only CSS transitions replace the
+ * previous GSAP + ScrollTrigger instance created by every section.
  */
-export default function ScrollReveal({ children, delay = 0, y = 32, className, stagger }: Props) {
+export default function ScrollReveal({ children, delay = 0, y = 28, className, stagger }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const [motionReady, setMotionReady] = useState(false);
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const element = ref.current;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    let ctx: { revert: () => void } | undefined;
+    if (!element || reducedMotion || !('IntersectionObserver' in window)) return;
 
-    (async () => {
-      const [{ gsap }, { ScrollTrigger }] = await Promise.all([
-        import('gsap'),
-        import('gsap/ScrollTrigger'),
-      ]);
-      gsap.registerPlugin(ScrollTrigger);
+    setVisible(false);
+    setMotionReady(true);
 
-      ctx = gsap.context(() => {
-        const targets = stagger ? Array.from(el.children) : el;
-        gsap.from(targets, {
-          opacity: 0,
-          y,
-          duration: 0.7,
-          ease: 'power2.out',
-          delay,
-          stagger: stagger ?? 0,
-          scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none none' },
-        });
-      }, el);
-    })();
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setVisible(true);
+        observer.disconnect();
+      },
+      { rootMargin: '0px 0px -8% 0px', threshold: 0.05 },
+    );
 
-    return () => ctx?.revert();
-  }, [delay, y, stagger]);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  const style: RevealStyle = {
+    '--reveal-delay': `${Math.max(0, delay) * 1000}ms`,
+    '--reveal-y': `${Math.max(0, y)}px`,
+  };
 
   return (
-    <div ref={ref} className={className}>
+    <div
+      ref={ref}
+      className={`reveal-shell ${className ?? ''}`}
+      data-motion={motionReady ? 'true' : 'false'}
+      data-visible={visible ? 'true' : 'false'}
+      data-stagger={stagger ? 'true' : 'false'}
+      style={style}
+    >
       {children}
     </div>
   );

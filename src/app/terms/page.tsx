@@ -8,24 +8,24 @@ export default function TermsPage() {
       <MStripe className="mb-6" />
 
       <div className="mb-8">
-        <p className="label mb-2 text-brand">Customer Contract</p>
+        <p className="label mb-2 text-brand">Draft legal content</p>
         <h1 className="display-1">TERMS &amp; CONDITIONS</h1>
-        <p className="text-xs text-ink-3">Last updated: August 2026</p>
+        <p className="text-xs text-ink-3">Status: awaiting owner and qualified legal review</p>
       </div>
 
       <div className="card space-y-6 text-sm text-ink-2 leading-relaxed">
         <section className="space-y-2">
-          <h2 className="text-base font-bold text-ink-1 uppercase tracking-wider">1. Service Scope</h2>
+          <h2 className="text-base font-bold text-ink-1 uppercase tracking-wider">1. Service scope</h2>
           <p>
-            G Force Tyres provides on-site mobile tyre replacement, wheel balancing, valve replacement, and eco-disposal of old tyres across our designated service zones in London.
+            The final agreement must define the services offered, confirmed service zones, exclusions, access requirements and what is included in the displayed price.
           </p>
         </section>
 
         <section className="space-y-2 border-t border-line pt-4">
           <h2 className="text-base font-bold text-ink-1 uppercase tracking-wider">2. Customer Responsibilities</h2>
-          <p>The customer agrees to ensure that:</p>
+          <p>Potential safe-access requirements to review before approval include:</p>
           <ul className="list-disc list-inside space-y-1 pl-2">
-            <li>The vehicle is parked on a firm, level surface with safe working clearance (at least 1 meter around the vehicle).</li>
+            <li>The vehicle is parked on a firm, level surface with adequate safe working clearance.</li>
             <li>The locking wheel nut key is present and accessible in the vehicle if locking nuts are installed.</li>
             <li>The tyre size selected matches the actual physical tyre size currently fitted on the vehicle sidewall.</li>
           </ul>
@@ -34,14 +34,14 @@ export default function TermsPage() {
         <section className="space-y-2 border-t border-line pt-4">
           <h2 className="text-base font-bold text-ink-1 uppercase tracking-wider">3. Pricing &amp; Payment</h2>
           <p>
-            A £50.00 deposit holds your requested fitting slot. The remaining balance is payable upon successful fitting completion via our mobile chip &amp; pin reader or card payment.
+            The approved deposit, remaining balance, supported payment methods and cancellation consequences must be displayed before the customer authorises payment.
           </p>
         </section>
 
         <section className="space-y-2 border-t border-line pt-4">
-          <h2 className="text-base font-bold text-ink-1 uppercase tracking-wider">4. Workmanship Guarantee</h2>
+          <h2 className="text-base font-bold text-ink-1 uppercase tracking-wider">4. Workmanship and remedies</h2>
           <p>
-            All tyre fittings are carried out to manufacturer OEM torque specifications. We recommend checking wheel nut torques within 50 miles of fitting.
+            Any workmanship promise, remedy, exclusion or post-fitting instruction requires approved operational and legal wording before publication.
           </p>
         </section>
 

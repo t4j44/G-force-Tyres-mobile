@@ -18,6 +18,8 @@ import {
 import AdminNav from '@/components/admin/AdminNav';
 import MStripe from '@/components/ui/MStripe';
 import { localStore, MOCK_FITTERS } from '@/lib/mockData';
+import { isMockDataEnabled } from '@/lib/mock-mode';
+import AdminDataPending from '@/components/admin/AdminDataPending';
 import { formatSlotTime } from '@/lib/utils';
 import type { SlotWithAvailability } from '@/types';
 
@@ -39,6 +41,7 @@ const DAYS_OF_WEEK = [
 ];
 
 export default function AdminSlotsPage() {
+  const mockMode = isMockDataEnabled();
   const [slots, setSlots] = useState<SlotWithAvailability[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [showGenerator, setShowGenerator] = useState(false);
@@ -55,7 +58,7 @@ export default function AdminSlotsPage() {
   const [blockReason, setBlockReason] = useState('Staff unavailable');
 
   function reloadSlots() {
-    const all = localStore.getSlots();
+    const all = mockMode ? localStore.getSlots() : [];
     setSlots(all);
     if (!selectedDate && all.length > 0) {
       setSelectedDate(all[0].slot_date);
@@ -64,7 +67,11 @@ export default function AdminSlotsPage() {
 
   useEffect(() => {
     reloadSlots();
-  }, []);
+  }, [mockMode]);
+
+  if (!mockMode) {
+    return <AdminDataPending title="AVAILABILITY DATA PENDING" />;
+  }
 
   const dates = Array.from(new Set(slots.map((s) => s.slot_date))).slice(0, 21);
   const slotsForDate = slots.filter((s) => s.slot_date === selectedDate);
@@ -168,7 +175,7 @@ export default function AdminSlotsPage() {
         <div>
           <h1 className="display-2 leading-none">SLOT SCHEDULE &amp; CAPACITY</h1>
           <p className="text-xs text-ink-3 mt-1">
-            Automated recurring 8-week slot generation, van capacity adjustments, and instant blackout days
+            Development controls for recurring slots, van capacity, and blocked dates
           </p>
         </div>
 

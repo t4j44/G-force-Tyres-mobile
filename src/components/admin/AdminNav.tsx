@@ -1,14 +1,25 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { Calendar, Package, Clock, LogOut, Wrench } from 'lucide-react';
 
 export default function AdminNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  async function signOut() {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
+    await fetch('/api/admin/logout', { method: 'POST' }).catch(() => null);
+    router.replace('/admin/login');
+    router.refresh();
+  }
 
   const links = [
-    { href: '/admin/bookings', label: 'Live Bookings', icon: Calendar },
+    { href: '/admin/bookings', label: 'Bookings', icon: Calendar },
     { href: '/admin/inventory', label: 'Tyre Inventory', icon: Package },
     { href: '/admin/slots', label: 'Slot Schedule', icon: Clock },
   ];
@@ -43,12 +54,14 @@ export default function AdminNav() {
             </Link>
           );
         })}
-        <Link
-          href="/"
-          className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold uppercase text-ink-3 hover:text-danger rounded transition-colors ml-2"
+        <button
+          type="button"
+          onClick={signOut}
+          disabled={isSigningOut}
+          className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold uppercase text-ink-3 hover:text-danger rounded transition-colors ml-2 disabled:opacity-60"
         >
-          <LogOut size={14} /> Exit
-        </Link>
+          <LogOut size={14} /> {isSigningOut ? 'Signing out…' : 'Sign out'}
+        </button>
       </nav>
     </div>
   );

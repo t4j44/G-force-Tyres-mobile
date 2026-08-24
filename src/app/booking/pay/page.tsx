@@ -18,11 +18,13 @@ import {
 import MStripe from '@/components/ui/MStripe';
 import { formatPrice, formatSlotTime, formatReg } from '@/lib/utils';
 import type { BookingWithDetails } from '@/types';
+import { isMockDataEnabled } from '@/lib/mock-mode';
 
 function PaymentPageContent() {
+  const mockMode = isMockDataEnabled();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const bookingRef = searchParams.get('ref') || 'GF-DEMO01';
+  const bookingRef = searchParams.get('ref') || '';
 
   const [bookingData, setBookingData] = useState<any>(null);
   const [timeLeft, setTimeLeft] = useState<number>(15 * 60); // 15 minutes in seconds
@@ -36,6 +38,7 @@ function PaymentPageContent() {
   const [cardName, setCardName] = useState('');
 
   useEffect(() => {
+    if (!mockMode) return;
     // Load from sessionStorage if available
     if (typeof window !== 'undefined') {
       const stored = sessionStorage.getItem('gf_checkout_data');
@@ -49,10 +52,11 @@ function PaymentPageContent() {
         }
       }
     }
-  }, []);
+  }, [mockMode]);
 
   // 15-minute countdown timer
   useEffect(() => {
+    if (!mockMode) return;
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -63,7 +67,20 @@ function PaymentPageContent() {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [mockMode]);
+
+  if (!mockMode) {
+    return (
+      <div className="container-g section max-w-2xl text-center">
+        <MStripe className="mb-6 mx-auto" />
+        <h1 className="display-2">PAYMENTS ARE NOT LIVE YET</h1>
+        <p className="mt-3 text-sm text-ink-2">
+          No card details can be entered until the verified Stripe Checkout flow is implemented in Phase 3.
+        </p>
+        <Link href="/" className="btn btn-secondary mt-6">Return to homepage</Link>
+      </div>
+    );
+  }
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
@@ -93,11 +110,12 @@ function PaymentPageContent() {
       if (data.ok) {
         router.push(`/confirmation/${bookingRef}`);
       } else {
-        // Even on offline/fallback, route to confirmation
-        router.push(`/confirmation/${bookingRef}`);
+        setError('Payment could not be confirmed. No booking has been completed.');
       }
     } catch {
-      router.push(`/confirmation/${bookingRef}`);
+      setError('Payment could not be confirmed. No booking has been completed.');
+    } finally {
+      setIsProcessing(false);
     }
   }
 
@@ -223,10 +241,10 @@ function PaymentPageContent() {
           <div className="p-4 bg-brand/5 border border-brand/20 rounded space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-brand uppercase tracking-wider">Local Test Mode</span>
-              <span className="badge badge-info text-[10px]">Instant Authorisation</span>
+              <span className="badge badge-info text-[10px]">Local test only</span>
             </div>
             <p className="text-xs text-ink-2">
-              Bypass test card input and simulate instant deposit confirmation.
+              Simulate the development-only confirmation path without collecting card data.
             </p>
             <button
               type="button"
@@ -234,7 +252,7 @@ function PaymentPageContent() {
               disabled={isProcessing}
               className="btn btn-secondary w-full btn-sm text-xs font-semibold"
             >
-              {isProcessing ? <Loader2 size={14} className="animate-spin" /> : '⚡ Instant 1-Click Test Payment'}
+              {isProcessing ? <Loader2 size={14} className="animate-spin" /> : 'Run local test confirmation'}
             </button>
           </div>
         </div>
