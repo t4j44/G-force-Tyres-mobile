@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState, type MouseEvent } from 'react';
 import { Menu, X, Wrench } from 'lucide-react';
+import BrandLogo from '@/components/layout/BrandLogo';
 
 const NAV = [
   { href: '/#tyre-finder', label: 'Find tyres' },
@@ -54,10 +55,13 @@ export default function Header() {
             href="/"
             onClick={handleBrandClick}
             aria-label="G Force Tyres home"
-            className="flex items-center gap-1.5 rounded text-lg font-bold tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-4 focus-visible:ring-offset-surface"
+            className="inline-flex shrink-0 items-center rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-4 focus-visible:ring-offset-surface"
           >
-            <span>G FORCE</span>
-            <span className="text-brand">TYRES</span>
+            <BrandLogo
+              priority
+              sizes="(max-width: 359px) 92px, (max-width: 639px) 104px, 118px"
+              className="w-[92px] min-[360px]:w-[104px] sm:w-[118px]"
+            />
           </Link>
 
           <nav className="hidden items-center gap-8 md:flex">
@@ -102,9 +106,9 @@ export default function Header() {
                 href="/"
                 onClick={handleBrandClick}
                 aria-label="G Force Tyres home"
-                className="rounded text-lg font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                className="inline-flex shrink-0 items-center rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
               >
-                G FORCE <span className="text-brand">TYRES</span>
+                <BrandLogo sizes="116px" className="w-[116px]" />
               </Link>
               <button
                 onClick={() => setOpen(false)}

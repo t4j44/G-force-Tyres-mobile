@@ -445,7 +445,7 @@
     --hero-scan-distance: 350px;
     position: absolute;
     z-index: 1;
-    top: -38px;
+    top: 8px;
     right: -164px;
     width: 430px;
     aspect-ratio: 1;
@@ -819,7 +819,7 @@
     .hero-title { max-width: 8.4ch; font-size: clamp(3.35rem, 15.4vw, 4.5rem); }
     .hero-lede { max-width: 33ch; margin-top: 18px; font-size: .94rem; }
     .hero-finder-anchor { margin-top: 22px; }
-    .hero-visual { --hero-tyre-opacity: .42; --hero-sheen-opacity: .36; --hero-scan-distance: 360px; top: -54px; right: -188px; width: 440px; }
+    .hero-visual { --hero-tyre-opacity: .42; --hero-sheen-opacity: .36; --hero-scan-distance: 360px; top: -12px; right: -188px; width: 440px; }
     .hero-microproof { gap: 7px 13px; }
     .finder-panel-head { padding: 14px 14px 0; }
     .finder-panel-body { padding: 12px 14px 14px; }

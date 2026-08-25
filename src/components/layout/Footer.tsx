@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import MStripe from '@/components/ui/MStripe';
+import BrandLogo from '@/components/layout/BrandLogo';
 
 export default function Footer() {
   return (
@@ -9,9 +10,13 @@ export default function Footer() {
 
         <div className="grid gap-10 md:grid-cols-4">
           <div>
-            <div className="mb-3 text-lg font-bold">
-              G FORCE <span className="text-brand">TYRES</span>
-            </div>
+            <Link
+              href="/"
+              aria-label="G Force Tyres home"
+              className="mb-4 inline-flex rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            >
+              <BrandLogo sizes="220px" className="w-[220px]" />
+            </Link>
             <p className="max-w-[28ch] text-sm text-ink-2 mb-4">
               A focused, location-first booking journey for mobile tyre fitting.
             </p>

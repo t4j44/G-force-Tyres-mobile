@@ -4,9 +4,17 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
 export const metadata: Metadata = {
-  title: 'G Force Tyres — Mobile Tyre Fitting',
+  applicationName: 'G Force Tyres Mobile',
+  title: {
+    default: 'G Force Tyres — Mobile Tyre Fitting',
+    template: '%s | G Force Tyres',
+  },
   description:
     'Check your fitting postcode, identify the right tyre size and continue into one focused booking journey.',
+  icons: {
+    icon: [{ url: '/icon.png', type: 'image/png', sizes: '512x512' }],
+    apple: [{ url: '/apple-icon.png', type: 'image/png', sizes: '180x180' }],
+  },
   openGraph: {
     title: 'G Force Tyres — Mobile Tyre Fitting',
     description: 'A location-first way to identify your tyre size and continue to booking.',
