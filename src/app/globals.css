@@ -16,6 +16,11 @@
     --surface-3:   #1C1C1C;
     --surface-4:   #242424;
 
+    /* Client-approved light surfaces */
+    --light:       #D1D5DB;
+    --light-2:     #E8EAED;
+    --light-3:     #F5F6F7;
+
     /* Borders */
     --border:      #2A2A2A;
     --border-2:    #383838;
@@ -24,6 +29,7 @@
     /* Brand */
     --brand:       #38BDF8;
     --brand-dim:   #1E8FC0;
+    --brand-on-light: #075985;
     --brand-subtle: rgba(56, 189, 248, 0.10);
     --brand-glow:  rgba(56, 189, 248, 0.20);
     --brand-ghost: rgba(56, 189, 248, 0.06);
@@ -34,6 +40,10 @@
     --text-3:      #6B6B6B;
     --text-4:      #404040;
     --text-inverse: #0D0D0D;
+    --text-on-light-1: #0D0D0D;
+    --text-on-light-2: #374151;
+    --text-on-light-3: #6B7280;
+    --border-light: #AEB4BE;
 
     /* Semantic */
     --success:     #22C55E;
@@ -314,6 +324,34 @@
     padding-right: clamp(16px, 4vw, 32px);
   }
   .section { padding-block: clamp(64px, 10vw, 96px); }
+
+  .section-light {
+    position: relative;
+    color: var(--text-on-light-1);
+    border-block: 1px solid var(--border-light);
+    background:
+      linear-gradient(140deg, rgba(255,255,255,.3), transparent 46%),
+      var(--light);
+  }
+
+  .section-light::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: clamp(16px, 4vw, 32px);
+    width: 108px;
+    height: 4px;
+    background: linear-gradient(
+      90deg,
+      var(--brand) 0 34%,
+      #FFFFFF 34% 67%,
+      var(--void) 67% 100%
+    );
+    transform: translateY(-50%);
+  }
+
+  .section-light .label,
+  .section-light .text-ink-2 { color: var(--text-on-light-2); }
 
   /* ── Low-cost motion + homepage ── */
   .site-header {
@@ -736,6 +774,21 @@
   .context-card h3 { margin-bottom: 11px; font-size: 1.08rem; font-weight: 700; }
   .process-card p,
   .context-card p { color: var(--text-2); font-size: .88rem; line-height: 1.7; }
+
+  .section-light .process-card {
+    color: var(--text-on-light-1);
+    border-color: var(--border-light);
+    background: linear-gradient(150deg, #FFFFFF, var(--light-2));
+    box-shadow: 0 14px 34px rgba(13,13,13,.08);
+  }
+
+  .section-light .process-card:hover {
+    border-color: rgba(30,143,192,.7);
+    box-shadow: 0 20px 44px rgba(13,13,13,.14), 0 0 26px rgba(56,189,248,.12);
+  }
+
+  .section-light .process-card p { color: var(--text-on-light-2); }
+  .section-light .process-number { color: var(--brand-on-light); }
 
   .context-icon {
     display: grid;

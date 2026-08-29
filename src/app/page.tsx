@@ -95,12 +95,12 @@ export default function HomePage() {
             <div className="hero-orbit hero-orbit-two" aria-hidden="true" />
             <HeroTyreMotion>
               <Image
-                src="/images/hero-tyre-v2.png"
-                alt="Black performance tyre with a graphite alloy wheel"
+                src="/images/hero-tyre-v3.webp"
+                alt="Low-profile performance tyre with a five-spoke graphite alloy wheel"
                 width={1254}
                 height={1254}
                 priority
-                sizes="(max-width: 767px) 340px, (max-width: 1199px) 44vw, 610px"
+                sizes="(max-width: 767px) 340px, (max-width: 1199px) 48vw, 650px"
                 className="hero-tyre-image"
               />
             </HeroTyreMotion>
@@ -134,7 +134,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="how" className="section content-auto">
+      <section id="how" className="section section-light content-auto">
         <div className="container-g">
           <ScrollReveal>
             <MStripe className="mb-6" />

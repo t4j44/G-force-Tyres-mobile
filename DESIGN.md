@@ -42,15 +42,20 @@ The visual language draws from motorsport editorial design — specifically BMW 
   --surface-2:     #141414;   /* Cards, panels, elevated surfaces */
   --surface-3:     #1C1C1C;   /* Input fields, secondary containers */
   --surface-4:     #242424;   /* Hover states on surface-2 */
+  --light:         #D1D5DB;   /* Client-approved light marketing sections */
+  --light-2:       #E8EAED;   /* Cards/elevated surfaces on light sections */
+  --light-3:       #F5F6F7;   /* Light-section hover/elevation */
 
   /* Borders */
   --border:        #2A2A2A;   /* Default dividers and card outlines */
   --border-2:      #383838;   /* Stronger borders, focus-adjacent */
   --border-brand:  rgba(56,189,248,0.35); /* Brand-coloured border on hover */
+  --border-light:  #AEB4BE;   /* Card and section borders on light surfaces */
 
   /* Brand */
   --brand:         #38BDF8;   /* Sky blue — primary CTAs, key highlights, links */
   --brand-dim:     #1E8FC0;   /* Hover state on brand */
+  --brand-on-light:#075985;   /* Accessible small accent text on light grey */
   --brand-subtle:  rgba(56,189,248,0.10); /* Brand-tinted surface */
   --brand-glow:    rgba(56,189,248,0.20); /* Focus rings, glows */
   --brand-ghost:   rgba(56,189,248,0.06); /* Card hover tint */
@@ -60,6 +65,9 @@ The visual language draws from motorsport editorial design — specifically BMW 
   --text-2:        #A3A3A3;   /* Secondary text, descriptions */
   --text-3:        #6B6B6B;   /* Tertiary, placeholders, timestamps */
   --text-4:        #404040;   /* Disabled text */
+  --text-on-light-1: #0D0D0D; /* Primary text on light sections */
+  --text-on-light-2: #374151; /* Secondary text on light sections */
+  --text-on-light-3: #6B7280; /* Tertiary text on light sections */
   --text-inverse:  #0D0D0D;   /* Text on brand-blue backgrounds */
 
   /* Semantic */
@@ -103,9 +111,20 @@ This design system is dark-first. There is no light mode variant for the public-
 ### Color Usage Rules
 - **Brand blue is used ONCE per viewport section** — only on the primary CTA or the most important highlight
 - **Never use brand blue for body text** — it is an accent, not a text colour
-- **Never use pure white (#FFF) for backgrounds** — use --surface or --surface-2
+- **Pure white (#FFF) is reserved for elevated cards on approved light marketing sections** — never use it as the page canvas
 - **Semantic colours (success/warning/danger) are only for status communication** — never decorative
 - **Photography always sits on --void or behind --overlay** — never floating on a surface
+
+### Homepage Surface Rhythm
+
+The client-approved homepage rhythm alternates surfaces instead of rendering the
+entire experience on near-black: hero on `--void`, journey proof on
+`--surface-2`, How It Works on `--light`, fitting context on `--surface-2`, and
+the closing CTA on `--void`. Light-section cards use white to create elevation,
+with `--border-light` and the `--text-on-light-*` hierarchy. The M-stripe remains
+visible at the dark/light transition. `--brand` remains the decorative sky-blue
+accent; small text on light grey uses `--brand-on-light` because the base sky blue
+does not meet text contrast requirements on `--light`.
 
 ---
 
@@ -327,8 +346,9 @@ This design system is dark-first. There is no light mode variant for the public-
 #### Feature Card (How It Works)
 ```css
 .card-feature {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: #FFFFFF; /* when placed in the client-approved light section */
+  border: 1px solid var(--border-light);
+  color: var(--text-on-light-1);
   padding: 32px;
   position: relative;
   /* 3D tilt on hover via JS transform */
@@ -650,14 +670,19 @@ gsap.ticker.lagSmoothing(0)
 ## 7. 3D Design Language
 
 ### Scene Philosophy
-The 3D tyre is the hero asset of the product. It should feel like a piece of precision engineering displayed in a showroom — dramatically lit, slowly rotating, inviting inspection.
+The tyre is the hero asset of the product. It should feel like a piece of
+precision engineering displayed in a showroom — dramatically lit, slowly moving,
+and inviting inspection. The production homepage currently uses an optimized
+transparent raster with CSS transforms so this effect does not impose a WebGL
+runtime on every visitor. A WebGL version may replace it only after measured
+mobile performance and fallback acceptance.
 
 ### Tyre Geometry Specifications
 ```javascript
 // Outer tyre ring
 const outerTyre = new THREE.TorusGeometry(
   1.2,    // major radius (tyre outer diameter)
-  0.45,   // minor radius (tyre cross-section)
+  0.32,   // lower-profile sports tyre cross-section
   64,     // tubular segments (smooth silhouette)
   128     // radial segments (smooth circumference)
 )
@@ -671,7 +696,7 @@ const rim = new THREE.CylinderGeometry(
 )
 
 // Rim spokes (5 spokes at 72deg intervals)
-const spoke = new THREE.BoxGeometry(0.055, 0.72, 0.30)
+const spoke = new THREE.BoxGeometry(0.11, 0.75, 0.28)
 ```
 
 ### Material Specifications
@@ -844,7 +869,8 @@ const breakpoints = {
 ### Quick Reference
 ```
 Colors:
-  bg: #0D0D0D (surface) or #000000 (hero)
+  dark bg: #0D0D0D (surface) or #000000 (hero)
+  light marketing section: #D1D5DB with white elevated cards
   accent: #38BDF8 (sky blue — ONE per section)
   text: #F5F5F5 (primary) #A3A3A3 (secondary)
   success: #22C55E | warning: #F59E0B | danger: #EF4444
